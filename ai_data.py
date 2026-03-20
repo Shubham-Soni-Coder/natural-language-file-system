@@ -3,11 +3,6 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 import json
-import logging
-
-
-# config the logging
-logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
 
 
 class AiHandler:
@@ -16,7 +11,7 @@ class AiHandler:
     ALLOWED_INTENTS = ["total", "size", "largest", "category", "summary"]
     ALLOWED_CATEGORIES = ["image", "video", "documents", "all"]
 
-    Prompt = """You are an intent detection system.
+    PROMPT = """You are an intent detection system.
 
         Your task is to extract structured intent from user queries.
 
@@ -94,7 +89,7 @@ class AiHandler:
                 model="gemini-2.5-flash",
                 contents=user_input,
                 config=types.GenerateContentConfig(
-                    system_instruction=self.Prompt,
+                    system_instruction=self.PROMPT,
                     response_mime_type="application/json",
                     temperature=0.0,
                 ),

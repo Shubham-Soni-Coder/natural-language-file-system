@@ -1,52 +1,51 @@
 from file_tools import FileTools
 from pathlib import Path
+from ai_data import AiHandler
 
 
 class QueryHandler:
     def __init__(self, folder: Path):
         self.tools = FileTools(folder)
+        self.ai = AiHandler()
         print("Scanning Folder,Please wait...")
         self.results = self.tools.analyze_folder()
 
     def process_query(self, user_input):
+        ai_response = self.ai.run_ai(user_input)
+        if ai_response is None:
+            print("Error: ai respone is none")
+            return None
 
-        # Mapping
-        query_map = {
+        intent = ai_response["intent"].lower()
+        argument = ai_response["argument"]
+
+        if intent == "category" and argument is None:
+            print("Missing Category")
+            return None
+
+        intent_map = {
             "total": self.handle_total,
             "size": self.handle_size,
             "largest": self.handle_largest,
-            "image": lambda: self.handle_category("image"),
-            "video": lambda: self.handle_category("video"),
-            "document": lambda: self.handle_category("documents"),
+            "summary": self.handle_summary,
+            "category": self.handle_category,
         }
 
-        user_input = user_input.lower()
+        handler = intent_map.get(intent)
+        if handler:
+            print(handler(argument))
+        else:
+            print("Unknown Intent: ", intent)
 
-        if "summary" in user_input or "all" in user_input:
-            print(self.handle_summary())
-            return
-
-        # user unput
-        found = False
-        for key, value in query_map.items():
-            if key in user_input:
-                result = value()
-                print(result)
-                found = True
-                break
-
-        if not found:
-            print("Invalid query")
-
-    def handle_total(self):
+    def handle_total(self, arg=None):
         return f"Total Files: {self.results['total_files']}"
 
-    def handle_size(self):
+    def handle_size(self, arg=None):
         return f"Total Size: {self.tools.size_converter(self.results['total_size'])}"
 
-    def handle_largest(self):
+    def handle_largest(self, arg=None):
         path_name = Path(self.results["largest_file"]["path"])
-        if path_name == "":
+        if not path_name:
             return "No files found"
         size = self.tools.size_converter(self.results["largest_file"]["size"])
         return f"""
@@ -62,7 +61,7 @@ class QueryHandler:
         else:
             return f"Invalid category. Available: {self.results['counts'].keys()}"
 
-    def handle_summary(self):
+    def handle_summary(self, arg=None):
         return self.tools.presentation()
 
     def runner(self):
