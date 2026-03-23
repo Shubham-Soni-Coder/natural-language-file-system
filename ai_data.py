@@ -11,66 +11,24 @@ class AiHandler:
     ALLOWED_INTENTS = ["total", "size", "largest", "category", "summary"]
     ALLOWED_CATEGORIES = ["image", "video", "documents", "all"]
 
-    PROMPT = """You are an intent detection system.
+    PROMPT = """
+    You are a tool selection system.
 
-        Your task is to extract structured intent from user queries.
+    Available tools:
+    - get_total_files
+    - get_total_size
+    - get_largest_file
+    - get_category_count (requires: category = image/video/documents)
+    - get_summary
 
-        Available intents:
-        - total
-        - size
-        - largest
-        - category (requires one of: image, video, documents)
-        - summary
-
-        Rules:
-        - Return ONLY valid JSON.
-        - Do NOT add any explanation.
-        - Do NOT add text before or after JSON.
-        - "intent" must be one of the allowed intents.
-        - "argument" must be:
-            - null for intents: total, size, largest, summary
-            - one of: image, video, documents (ONLY if intent = category)
-
-        Normalization rules:
-        - Convert plural to singular:
-            - images → image
-            - videos → video
-            - documents/docs/files → documents
-        - Map similar words:
-            - pics/photos → image
-            - vids/movies → video
-
-        Output format:
-        {
-        "intent": "...",
-        "argument": ...
-        }
-
-        Examples:
-
-        User input: "how many files are there?"
-        Output:
-        {"intent": "total", "argument": null}
-
-        User input: "what is the total size?"
-        Output:
-        {"intent": "size", "argument": null}
-
-        User input: "show largest file"
-        Output:
-        {"intent": "largest", "argument": null}
-
-        User input: "show all images"
-        Output:
-        {"intent": "category", "argument": "image"}
-
-        User input: "list videos"
-        Output:
-        {"intent": "category", "argument": "video"}
-
-        User input: "give me full summary"
-        Output:
-        {"intent": "summary", "argument": null}
+    Rules:
+    - Always return valid JSON
+    - Do NOT explain anything
+    - Only output:
+    {
+    "tool": "...",
+    "arguments": {...}
+    }
     """
 
     def __init__(self):
@@ -81,8 +39,8 @@ class AiHandler:
         self.client = genai.Client(api_key=self.api_key)
 
     def run_ai(self, user_input: str):
-
-        if user_input == "":
+        print("Ai is starting ")
+        if user_input.strip() == "" or user_input.lower() == "exit":
             return "No query"
         try:
             response = self.client.models.generate_content(
@@ -94,7 +52,7 @@ class AiHandler:
                     temperature=0.0,
                 ),
             )
-
+            print("Raw Ai response : ", response.text)
             # ----Validation Layer -----
             # 1.  Structured Validation (Is it valid Json)
             try:
@@ -104,21 +62,15 @@ class AiHandler:
                 return None
 
             # 2. Schems Validation (Do the keys exists)
-            if "intent" not in data or "argument" not in data:
+            if "tool" not in data or "arguments" not in data:
                 print("Missing required keys in Ai resoned")
                 return None
 
-            # 3. Value Validation (Do the value allowed)
-            if data["intent"] not in self.ALLOWED_INTENTS:
-                print(f"Unsupported intent: {data['intent']}")
-                return None
-
-            # Special check for category arguments
-            if (
-                data["intent"] == "category"
-                and data["argument"] not in self.ALLOWED_CATEGORIES
+            # 3. Check for category as dict
+            if not isinstance(data["tool"], str) or not isinstance(
+                data["arguments"], dict
             ):
-                print("Invaild category arguments")
+                print("Invalid data type in Ai resoned")
                 return None
 
             return data
