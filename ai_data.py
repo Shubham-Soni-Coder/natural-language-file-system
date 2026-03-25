@@ -7,30 +7,6 @@ import json
 
 class AiHandler:
 
-    # 1. Configuartion Constructs (Master list)
-    ALLOWED_INTENTS = ["total", "size", "largest", "category", "summary"]
-    ALLOWED_CATEGORIES = ["image", "video", "documents", "all"]
-
-    PROMPT = """
-    You are a tool selection system.
-
-    Available tools:
-    - get_total_files
-    - get_total_size
-    - get_largest_file
-    - get_category_count (requires: category = image/video/documents)
-    - get_summary
-
-    Rules:
-    - Always return valid JSON
-    - Do NOT explain anything
-    - Only output:
-    {
-    "tool": "...",
-    "arguments": {...}
-    }
-    """
-
     def __init__(self):
         # load the env file
         load_dotenv()
@@ -38,7 +14,28 @@ class AiHandler:
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.client = genai.Client(api_key=self.api_key)
 
-    def run_ai(self, user_input: str):
+    def build_prompt(self, tools):
+        # 1. Configuartion Constructs (Master list)
+        ALLOWED_CATEGORIES = ["image", "video", "documents"]
+
+        return f"""
+        You are a tool selection system.
+
+        Available tools:
+        {tools}
+
+        Rules:
+        - Always return valid JSON
+        - Do NOT explain anything
+        - category must be in : {ALLOWED_CATEGORIES}
+        - Only output:
+        {{
+        'tool': '...',
+        'arguments': {{}}
+        }}
+        """
+
+    def run_ai(self, user_input: str, tools):
         print("Ai is starting ")
         if user_input.strip() == "" or user_input.lower() == "exit":
             return "No query"
@@ -47,7 +44,7 @@ class AiHandler:
                 model="gemini-2.5-flash",
                 contents=user_input,
                 config=types.GenerateContentConfig(
-                    system_instruction=self.PROMPT,
+                    system_instruction=self.build_prompt(tools),
                     response_mime_type="application/json",
                     temperature=0.0,
                 ),
@@ -81,6 +78,9 @@ class AiHandler:
 
 
 if __name__ == "__main__":
+    from mcp_server import MCPServer
+
+    tools = MCPServer().get_tools()
     user_input = input("Enter your query : ")
     ai = AiHandler()
-    print(ai.run_ai(user_input))
+    print(ai.run_ai(user_input, tools))

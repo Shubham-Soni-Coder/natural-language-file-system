@@ -1,6 +1,5 @@
 from file_tools import FileTools
 from pathlib import Path
-from ai_data import AiHandler
 
 
 class MCPServer:
@@ -12,7 +11,7 @@ class MCPServer:
         "summary": "get_summary",
     }
 
-    def __init__(self, folder_name):
+    def __init__(self, folder_name="test_folder"):
         self.tools = FileTools(folder_name)
         self.results = False
 
@@ -41,7 +40,6 @@ class MCPServer:
                 "description": "Returns the count of files for a specific category (e.g., 'Images', 'Docs').",
                 "parameters": {
                     "category": "string",  # Ai must know that the parameter is string
-                    "Allowed": ["image", "video", "documents"],
                 },
             },
             "get_summary": {
@@ -105,41 +103,3 @@ class MCPServer:
             return f"Execution Error: {str(e)}"
 
 
-def test_folder():
-    mcp = MCPServer("test_folder")
-    ai = AiHandler()
-
-    while True:
-        user_input = input("Enter Query: ")
-
-        if user_input.lower() == "exit":
-            print("Thanks for using Ai")
-            break
-
-        ai_respone = ai.run_ai(user_input)
-
-        if ai_respone is None:
-            print("Could not understand query")
-            continue
-
-        intent = ai_respone["intent"]
-        argument = ai_respone["argument"]
-
-        if intent not in mcp.INTENT_TO_TOOL:
-            print("Unknown intent")
-            continue
-
-        tool_name = mcp.INTENT_TO_TOOL[intent]
-
-        args = {}
-        if argument:
-            args["category"] = argument
-
-        result = mcp.execute_tool(tool_name, args)
-
-        print("Result: ", result)
-
-
-if __name__ == "__main__":
-
-    test_folder()
