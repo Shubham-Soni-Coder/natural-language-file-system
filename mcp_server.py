@@ -1,16 +1,9 @@
 from file_tools import FileTools
 from pathlib import Path
+import json
 
 
 class MCPServer:
-    INTENT_TO_TOOL = {
-        "total": "get_total_files",
-        "size": "get_total_size",
-        "largest": "get_largest_file",
-        "category": "get_category_count",
-        "summary": "get_summary",
-    }
-
     def __init__(self, folder_name="test_folder"):
         self.tools = FileTools(folder_name)
         self.results = False
@@ -101,5 +94,3 @@ class MCPServer:
             return handler()
         except Exception as e:
             return f"Execution Error: {str(e)}"
-
-

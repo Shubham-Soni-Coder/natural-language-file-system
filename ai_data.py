@@ -17,12 +17,13 @@ class AiHandler:
     def build_prompt(self, tools):
         # 1. Configuartion Constructs (Master list)
         ALLOWED_CATEGORIES = ["image", "video", "documents"]
+        tools_json = json.dumps(tools, indent=2)
 
         return f"""
         You are a tool selection system.
 
         Available tools:
-        {tools}
+        {tools_json}
 
         Rules:
         - Always return valid JSON
@@ -30,15 +31,15 @@ class AiHandler:
         - category must be in : {ALLOWED_CATEGORIES}
         - Only output:
         {{
-        'tool': '...',
-        'arguments': {{}}
+        "tool": "...",
+        "arguments": {{}}
         }}
         """
 
     def run_ai(self, user_input: str, tools):
         print("Ai is starting ")
-        if user_input.strip() == "" or user_input.lower() == "exit":
-            return "No query"
+        if user_input.strip() == "":
+            return None
         try:
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash",

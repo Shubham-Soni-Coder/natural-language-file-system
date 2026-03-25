@@ -24,7 +24,7 @@ def test_folder():
             continue
 
         if tool_name == "get_category_count":
-            if arguments["category"] not in ["image", "video", "documents"]:
+            if arguments.get("category") not in ["image", "video", "documents"]:
                 print("Invalid Category parts")
                 continue
 
