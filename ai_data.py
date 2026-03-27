@@ -70,7 +70,6 @@ class AiHandler:
             ):
                 print("Invalid data type in Ai resoned")
                 return None
-
             return data
 
         except Exception as error:

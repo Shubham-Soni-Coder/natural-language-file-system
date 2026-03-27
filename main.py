@@ -1,49 +1,40 @@
-from mcp_server import MCPServer
+import requests
+import json
 from ai_data import AiHandler
 
-mcp = MCPServer("test_folder")
+# get responed
+tools = requests.get("http://127.0.0.1:8000/tools").json()
+
 ai = AiHandler()
 
 
-def test_folder():
-    while True:
-        user_input = input("Enter Query: ")
-        if user_input.lower() == "exit":
-            print("Thanks for using Ai")
-            break
-
-        ai_respone = ai.run_ai(user_input, MCPServer().get_tools())
-        if ai_respone is None:
-            print("Could not understand query")
-            continue
-
-        tool_name = ai_respone["tool"]
-        arguments = ai_respone["arguments"]
-        if tool_name not in mcp.tool_registry:
-            print("Invalid tool from ai")
-            continue
-
-        if tool_name == "get_category_count":
-            if arguments.get("category") not in ["image", "video", "documents"]:
-                print("Invalid Category parts")
-                continue
-
-        tool_info = mcp.tool_registry[tool_name]
-        required_args = tool_info["parameters"]
-        has_missing = False
-
-        for param in required_args:
-            if param not in arguments:
-                print(f"Missing argument: {param}")
-                has_missing = True
-                break
-        if has_missing:
-            continue
-
-        result = mcp.execute_tool(tool_name, arguments)
-
-        print("Result: ", result)
+# ai rspone
+def get_respone(user_input, tools):
+    ai_respone = ai.run_ai(user_input, tools)
+    return ai_respone
 
 
-if __name__ == "__main__":
-    test_folder()
+def respone_checker(ai_respone):
+    if ai_respone is None:
+        print("Could not understand query")
+        return None
+    tool_name = ai_respone["tool"]
+    arguments = ai_respone["arguments"]
+
+    return tool_name, arguments
+
+
+while True:
+    user_input = input("Enter Query: ")
+    if user_input.lower() == "exit":
+        print("Thanks for using Ai")
+        break
+
+    ai_respone = get_respone(user_input, tools)
+    tool_name, arguments = respone_checker(ai_respone)
+    respone = requests.post(
+        "http://127.0.0.1:8000/execute",
+        json={"tool": tool_name, "arguments": arguments},
+    )
+
+    print(respone.json())
