@@ -29,10 +29,12 @@ class AiHandler:
         - Always return valid JSON
         - Do NOT explain anything
         - category must be in : {ALLOWED_CATEGORIES}
+        - You can return multiple tools if needed 
         - Only output:
         {{
-        "tool": "...",
-        "arguments": {{}}
+            "tools":[
+                {{"tool":"...","argument":{...}}}
+            ]
         }}
         """
 
@@ -59,17 +61,6 @@ class AiHandler:
                 print("Invalid Json Forment recived from AI")
                 return None
 
-            # 2. Schems Validation (Do the keys exists)
-            if "tool" not in data or "arguments" not in data:
-                print("Missing required keys in Ai resoned")
-                return None
-
-            # 3. Check for category as dict
-            if not isinstance(data["tool"], str) or not isinstance(
-                data["arguments"], dict
-            ):
-                print("Invalid data type in Ai resoned")
-                return None
             return data
 
         except Exception as error:

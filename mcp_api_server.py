@@ -14,19 +14,8 @@ def get_tools():
 
 @app.post("/execute")
 def execute_tools(data: dict):
-    tool = data.get("tool")
-    args = data.get("arguments", {})
-
-    # validation tool
-    if tool not in mcp.tool_registry:
-        return {"status": "error", "message": "Invalid tool"}
-
-    # valdation arguments
-    required = mcp.tool_registry[tool]["parameters"]
-
-    for param in required:
-        if param not in args:
-            return {"error": f"missing argument {param}"}
+    tool = data["tool_name"]
+    args = data.get("arguments")
 
     result = mcp.execute_tool(tool, args)
 
