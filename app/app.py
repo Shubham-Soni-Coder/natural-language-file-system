@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from mcp_server import MCPServer
+from services.mcp_server import MCPServer
 
 # init
 app = FastAPI()
