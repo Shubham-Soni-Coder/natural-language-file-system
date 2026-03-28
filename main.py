@@ -1,75 +1,61 @@
 import requests
-import json
-from ai_data import AiHandler
-from mcp_server import MCPServer
 
-# get responed
-tools = requests.get("http://127.0.0.1:8000/tools").json()
-
-ai = AiHandler()
-mcp = MCPServer()
+SERVER_URL = "http://127.0.0.1:8000"
 
 
-# ai rspone
-def get_respone(user_input, tools):
-    ai_respone = ai.run_ai(user_input, tools)
-    return ai_respone
+def display_results(response: requests.Response) -> None:
+    """Handles formatting and printing of the server response."""
+    if response.status_code != 200:
+        error_detail = response.json().get("detail", "Unknown error")
+        print(f"Server Error ({response.status_code}): {error_detail}")
+        return
+
+    results = response.json().get("response", [])
+    if not results:
+        print("No tools were executed.")
+        return
+
+    for result in results:
+        tool_name = result.get("tool")
+        tool_output = result.get("result", result.get("error"))
+        print(f"\n--- Output from [{tool_name}] ---")
+        print(f"{tool_output}")
 
 
-def respone_checker(ai_respone):
-    if ai_respone is None:
-        print("Could not understand query")
-        return None
-    if ai_respone.get("tools") is None:
-        print("tools not found")
-        return None
-    return ai_respone.get("tools")
+def process_user_query(user_input: str) -> None:
+    """Sends the user's string query to the FastAPI backend."""
+    try:
+        response = requests.post(f"{SERVER_URL}/query", json={"query": user_input})
+        display_results(response)
+    except requests.exceptions.ConnectionError:
+        print(f"\n[!] Connection Error: Could not connect to the server at {SERVER_URL}.")
+        print("Is your FastAPI backend running? Try: uvicorn app.app:app --reload")
+    except Exception as e:
+        print(f"\nAn unexpected client-side error occurred: {e}")
 
 
-def text_checker(tools):
-    # 1.Strcuture check
-    if "tool" not in tools or "argument" not in tools:
-        return {"status": "error", "message": "Missing required Keys in Ai responed"}
-    tool_name = tools["tool"]
-    args = tools["argument"]
-    # 2. tool validation
-    if tool_name not in mcp.tool_registry:
-        return {"status": "error", "message": f"Invalid tool : {tool_name}"}
-    # 3. valdation arguments
-    required = mcp.tool_registry[tool_name]["parameters"]
+def start_client() -> None:
+    """Main CLI loop for gathering user input."""
+    print("Welcome to the AI File Management Client!")
+    print("Waiting for your command...")
 
-    for param in required:
-        if param not in args:
-            return {"status": "error", "message": f"missing argument {param}"}
-    return tools
+    while True:
+        try:
+            user_input = input("\nEnter Query (or type 'exit'): ").strip()
 
+            if user_input.lower() == "exit":
+                print("Thanks for using the AI System!")
+                break
 
-def result_showner(tools_list):
-    result = []
+            if not user_input:
+                continue
 
-    for tools in tools_list:
-        tools = text_checker(tools)
-        tool_name = tools["tool"]
-        arguments = tools["argument"]
+            process_user_query(user_input)
 
-        respone = requests.post(
-            "http://127.0.0.1:8000/execute",
-            json={"tool_name": tool_name, "arguments": arguments},
-        )
-
-        result.append(respone.json())
-
-    return result
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            break
 
 
-while True:
-    user_input = input("Enter Query: ")
-    if user_input.lower() == "exit":
-        print("Thanks for using Ai")
-        break
-
-    ai_respone = get_respone(user_input, tools)
-    tools_list = respone_checker(ai_respone)
-    result = result_showner(tools_list)
-
-    print(result)
+if __name__ == "__main__":
+    start_client()

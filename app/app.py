@@ -1,22 +1,11 @@
 from fastapi import FastAPI
-from services.mcp_server import MCPServer
+from routes.tools_route import route as tools_router
+from routes.execute_route import route as execute_router
+from routes.query_route import route as query_router
 
-# init
-app = FastAPI()
+app = FastAPI(title="AI File Management System")
 
-mcp = MCPServer()
-
-
-@app.get("/tools")
-def get_tools():
-    return {"status": "success", "tools": mcp.get_tools()}
-
-
-@app.post("/execute")
-def execute_tools(data: dict):
-    tool = data["tool_name"]
-    args = data.get("arguments")
-
-    result = mcp.execute_tool(tool, args)
-
-    return {"status": "success", "data": result}
+# Register individual specialized routers
+app.include_router(tools_router)
+app.include_router(execute_router)
+app.include_router(query_router)
