@@ -64,7 +64,7 @@ def get_response_server() -> None:
     print(result.text)
 
 
-def add_data_dababase() -> None:
+def add_user() -> None:
     name = "Himanshi"
     email = "dcs@gmail.com"
 
@@ -73,5 +73,16 @@ def add_data_dababase() -> None:
     print(result.text)
 
 
+def add_file() -> None:
+    filename = "text.txt"
+    user_id = 20
+
+    result = requests.post(
+        f"{SERVER_URL}/files", json={"filename": filename, "user_id": user_id}
+    )
+
+    print(result.text)
+
+
 if __name__ == "__main__":
-    add_data_dababase()
+    add_file()

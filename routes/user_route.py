@@ -19,4 +19,4 @@ def create_user(request: UserDataRequest, db: DataBaseDep):
 
 @route.get("/user")
 def get_user(db: DataBaseDep):
-    return db.query()
+    return db.query(User).all()

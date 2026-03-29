@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, Column, ForeignKey
+from sqlalchemy import Integer, String, Column, ForeignKey
 from utilas.database import Base
 
 
