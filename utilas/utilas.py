@@ -1,10 +1,11 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+import os
+from dotenv import load_dotenv
 
-DATABASE_URL = "postgresql://postgres:Shubham@localhost:5432/database"
+load_dotenv()
 
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
+def get_keys():
+    gemni_api_key = os.getenv("GEMINI_API_KEY")
+    sql_password = os.getenv("PASSWORD")
 
-Base = declarative_base()
+    return {"gemni_api_key": gemni_api_key, "sql_password": sql_password}
