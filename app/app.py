@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from routes.tools_route import route as tools_router
 from routes.execute_route import route as execute_router
 from routes.query_route import route as query_router
+from routes.server_route import route as server_route
+from database.database import User
+from utilas.utilas import Base
+
 
 app = FastAPI(title="AI File Management System")
 
@@ -9,3 +13,4 @@ app = FastAPI(title="AI File Management System")
 app.include_router(tools_router)
 app.include_router(execute_router)
 app.include_router(query_router)
+app.include_router(server_route)

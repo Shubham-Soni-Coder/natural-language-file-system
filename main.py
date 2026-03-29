@@ -28,7 +28,9 @@ def process_user_query(user_input: str) -> None:
         response = requests.post(f"{SERVER_URL}/query", json={"query": user_input})
         display_results(response)
     except requests.exceptions.ConnectionError:
-        print(f"\n[!] Connection Error: Could not connect to the server at {SERVER_URL}.")
+        print(
+            f"\n[!] Connection Error: Could not connect to the server at {SERVER_URL}."
+        )
         print("Is your FastAPI backend running? Try: uvicorn app.app:app --reload")
     except Exception as e:
         print(f"\nAn unexpected client-side error occurred: {e}")
@@ -57,5 +59,10 @@ def start_client() -> None:
             break
 
 
+def get_response_server() -> None:
+    result = requests.get(f"{SERVER_URL}/database")
+    print(result.text)
+
+
 if __name__ == "__main__":
-    start_client()
+    get_response_server()
