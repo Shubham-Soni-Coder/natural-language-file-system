@@ -64,25 +64,26 @@ def get_response_server() -> None:
     print(result.text)
 
 
-def add_user() -> None:
-    name = "Himanshi"
-    email = "dcs@gmail.com"
-
+def add_user(name, email) -> None:
     result = requests.post(f"{SERVER_URL}/user", json={"name": name, "email": email})
 
     print(result.text)
 
 
-def add_file() -> None:
-    filename = "text.txt"
-    user_id = 20
+def add_file(filename, user_id) -> None:
 
-    result = requests.post(
-        f"{SERVER_URL}/files", json={"filename": filename, "user_id": user_id}
+    print(
+        requests.post(
+            f"{SERVER_URL}/files", json={"filename": filename, "user_id": user_id}
+        )
     )
 
+
+def specific_data() -> None:
+    user_id = 2
+    result = requests.post(f"{SERVER_URL}/user/{user_id}/files")
     print(result.text)
 
 
 if __name__ == "__main__":
-    add_file()
+    add_user(name="Saloni", email="saloni@gmail.com")

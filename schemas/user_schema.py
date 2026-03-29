@@ -1,6 +1,15 @@
 from pydantic import BaseModel
 
 
-class UserDataRequest(BaseModel):
+class UserCreate(BaseModel):
     name: str
     email: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+
+    class config:
+        from_attributes = True
