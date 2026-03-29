@@ -64,5 +64,14 @@ def get_response_server() -> None:
     print(result.text)
 
 
+def add_data_dababase() -> None:
+    name = "Himanshi"
+    email = "dcs@gmail.com"
+
+    result = requests.post(f"{SERVER_URL}/user", json={"name": name, "email": email})
+
+    print(result.text)
+
+
 if __name__ == "__main__":
-    get_response_server()
+    add_data_dababase()

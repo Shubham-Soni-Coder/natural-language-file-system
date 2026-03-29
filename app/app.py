@@ -4,11 +4,6 @@ from routes.execute_route import route as execute_router
 from routes.query_route import route as query_router
 from routes.server_route import route as server_route
 
-# from database.database import User
-
-# from utilas.database import Base,get_db
-
-
 app = FastAPI(title="AI File Management System")
 
 # Register individual specialized routers
