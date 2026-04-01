@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from services.mcp_server import MCPServer
 from app.dependencies import McpServerDep
+from utils.logging_config import main_logger as logger
 
 
 route = APIRouter()
@@ -8,4 +9,7 @@ route = APIRouter()
 
 @route.get("/tools")
 def get_tools(mcp: McpServerDep):
-    return {"status": "success", "tools": mcp.get_tools()}
+    logger.info("/tools endpoint invoked")
+    tools = mcp.get_tools()
+    logger.debug("%s tools available", len(tools))
+    return {"status": "success", "tools": tools}

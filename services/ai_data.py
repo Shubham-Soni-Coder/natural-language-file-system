@@ -3,21 +3,24 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 import json
+from utils.logging_config import main_logger as logger
 
 
 class AiHandler:
 
     def __init__(self):
-        # load the env file
         load_dotenv()
 
         self.api_key = os.getenv("GEMINI_API_KEY")
+        if not self.api_key:
+            logger.warning("GEMINI_API_KEY is not configured.")
         self.client = genai.Client(api_key=self.api_key)
+        logger.info("AiHandler initialized")
 
     def build_prompt(self, tools):
-        # 1. Configuartion Constructs (Master list)
         ALLOWED_CATEGORIES = ["image", "video", "documents"]
         tools_json = json.dumps(tools, indent=2)
+        logger.debug("Building AI prompt for tools: %s", tools_json)
 
         return f"""
         You are a tool selection system.
@@ -33,14 +36,15 @@ class AiHandler:
         - Only output:
         {{
             "tools":[
-                {{"tool":"...","argument":{...}}}
+                {{"tool":"...","argument":{{...}}}}
             ]
         }}
         """
 
     def run_ai(self, user_input: str, tools):
-        print("Ai is starting ")
+        logger.info("AI processing query")
         if user_input.strip() == "":
+            logger.warning("Empty user input received for AI processing")
             return None
         try:
             response = self.client.models.generate_content(
@@ -52,26 +56,25 @@ class AiHandler:
                     temperature=0.0,
                 ),
             )
-            print("Raw Ai response : ", response.text)
-            # ----Validation Layer -----
-            # 1.  Structured Validation (Is it valid Json)
+            logger.debug("Raw AI response: %s", response.text)
             try:
                 data = json.loads(response.text)
             except json.decoder.JSONDecodeError:
-                print("Invalid Json Forment recived from AI")
+                logger.warning("Invalid JSON format received from AI")
                 return None
 
             return data
 
         except Exception as error:
-            print(str(error))
+            logger.exception("AI execution failed")
             return None
 
 
 if __name__ == "__main__":
-    from mcp_server import MCPServer
+    from services.mcp_server import MCPServer
 
     tools = MCPServer().get_tools()
     user_input = input("Enter your query : ")
     ai = AiHandler()
-    print(ai.run_ai(user_input, tools))
+    result = ai.run_ai(user_input, tools)
+    logger.info("AI runner produced result: %s", result)
