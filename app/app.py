@@ -6,6 +6,7 @@ from routes.server_route import route as server_route
 from routes.user_route import route as user_route
 from routes.file_route import route as file_route
 from utils.logging_config import main_logger as logger
+from app.exception_handlers import add_exception_handlers
 
 app = FastAPI(title="AI File Management System")
 logger.info("FastAPI application initialized")
@@ -17,3 +18,6 @@ app.include_router(query_router)
 app.include_router(server_route)
 app.include_router(user_route)
 app.include_router(file_route)
+
+# Initialize global automated error handling
+add_exception_handlers(app)
