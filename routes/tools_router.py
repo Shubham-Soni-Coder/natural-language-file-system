@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from services.mcp_server import MCPServer
-from app.dependencies import McpServerDep
-from utils.logging_config import main_logger as logger
+from services import MCPServer
+from app import McpServerDep
+from utils import main_logger as logger
 
 
 route = APIRouter()

@@ -1,15 +1,13 @@
 import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from utils.logging_config import main_logger as logger
-from utils.utilas import get_keys
+from .logging_config import main_logger as logger
+from .Config import settings
 
-password = get_keys()["sql_password"]
 
-if password is None:
-    logger.warning("Database password is not set in environment variables.")
+password = settings.DB_PASSWORD
 
-DATABASE_URL = f"postgresql://postgres:{password}@localhost:5432/database"
+DATABASE_URL = f"postgresql://{settings.DB_USER}:{password}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 logger.debug("Database URL initialized. Password is hidden for security.")
 
 engine = create_engine(DATABASE_URL)

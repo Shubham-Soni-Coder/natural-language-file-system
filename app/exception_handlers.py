@@ -1,7 +1,7 @@
 from fastapi import Request, FastAPI
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
-from utils.logging_config import main_logger as logger
+from utils import main_logger as logger
 
 def add_exception_handlers(app: FastAPI):
     @app.exception_handler(IntegrityError)

@@ -1,11 +1,9 @@
 import logging
 from fastapi import Depends
 from typing import Annotated
-from services.mcp_server import MCPServer
-from services.ai_data import AiHandler
-from utils.database import get_db
+from services import MCPServer, AiHandler
+from utils import get_db, main_logger as logger
 from sqlalchemy.orm import Session
-from utils.logging_config import main_logger as logger
 
 # 1. Initialize at once when the server is starting
 mcp_instance = MCPServer()

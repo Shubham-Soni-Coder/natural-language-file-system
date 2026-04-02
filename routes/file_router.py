@@ -1,8 +1,8 @@
 from fastapi import APIRouter
-from schemas.file_schema import FileCreate, FileRespone
-from app.dependencies import DataBaseDep
-from models.file_model import File
-from utils.logging_config import main_logger as logger
+from schemas import FileCreate, FileRespone
+from app import DataBaseDep
+from models import File
+from utils import main_logger as logger
 
 
 route = APIRouter()

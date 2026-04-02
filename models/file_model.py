@@ -1,5 +1,5 @@
 from sqlalchemy import Integer, String, Column, ForeignKey
-from utils.database import Base
+from utils import Base
 
 
 class File(Base):

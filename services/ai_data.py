@@ -3,17 +3,13 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 import json
-from utils.logging_config import main_logger as logger
-
+from utils import main_logger as logger, settings
 
 class AiHandler:
 
     def __init__(self):
-        load_dotenv()
 
-        self.api_key = os.getenv("GEMINI_API_KEY")
-        if not self.api_key:
-            logger.warning("GEMINI_API_KEY is not configured.")
+        self.api_key = settings.GEMINI_API_KEY
         self.client = genai.Client(api_key=self.api_key)
         logger.info("AiHandler initialized")
 
@@ -71,7 +67,7 @@ class AiHandler:
 
 
 if __name__ == "__main__":
-    from services.mcp_server import MCPServer
+    from services import MCPServer
 
     tools = MCPServer().get_tools()
     user_input = input("Enter your query : ")

@@ -1,5 +1,5 @@
 import requests
-from utils.logging_config import main_logger as logger
+from utils import main_logger as logger
 
 SERVER_URL = "http://127.0.0.1:8000"
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from schemas.query_schema import QueryRequest
-from app.dependencies import McpServerDep, AiHandlerDep
-from utils.logging_config import main_logger as logger
+from schemas import QueryRequest
+from app import McpServerDep, AiHandlerDep
+from utils import main_logger as logger
 
 route = APIRouter()
 

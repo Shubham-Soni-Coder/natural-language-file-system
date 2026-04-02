@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from schemas.tool_schema import ToolExecuteRequest
-from app.dependencies import McpServerDep
-from utils.logging_config import main_logger as logger
+from schemas import ToolExecuteRequest
+from app import McpServerDep
+from utils import main_logger as logger
 
 route = APIRouter()
 

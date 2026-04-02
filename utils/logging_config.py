@@ -1,17 +1,13 @@
 import logging
-import os
 from logging.handlers import RotatingFileHandler
-from dotenv import load_dotenv
+from .Config import settings
 
-# load env 
-load_dotenv()
 
 def setup_logging():
-    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
+    log_level_str = str(settings.LOG_LEVEL).upper()
     log_level = getattr(logging, log_level_str, logging.INFO)
 
-    log_file_path = os.getenv("LOG_FILE_PATH", "extra.log")
-    print
+    log_file_path = settings.LOG_FILE_PATH
     app_logger = logging.getLogger("AIFileManagerment")
     app_logger.setLevel(log_level)
 

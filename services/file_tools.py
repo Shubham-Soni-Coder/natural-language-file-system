@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import random
 from string import ascii_letters
-from utils.logging_config import main_logger as logger
+from utils import main_logger as logger
 
 
 class FileTools:
