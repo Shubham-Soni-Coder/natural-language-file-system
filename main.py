@@ -70,32 +70,12 @@ def start_client() -> None:
             break
 
 
-def get_response_server() -> None:
-    logger.info("Requesting database health check")
-    result = requests.get(f"{SERVER_URL}/database")
-    print(result.text)
-
-
-def add_user(name, email) -> None:
-    logger.info("Adding user: %s <%s>", name, email)
-    result = requests.post(f"{SERVER_URL}/user", json={"name": name, "email": email})
-    print(result.text)
-
-
-def add_file(filename, user_id) -> None:
-    logger.info("Adding file: %s for user %s", filename, user_id)
+def create_task(user_id,task_type,input_data=None):
+    logger.info("Adding tasks : %s for  user %s",task_type,user_id)
     response = requests.post(
-        f"{SERVER_URL}/files", json={"filename": filename, "user_id": user_id}
+        f"{SERVER_URL}/tasks",json={"user_id":user_id,"task_type":task_type,"input_data":input_data}
     )
     print(response.text)
 
-
-def specific_data() -> None:
-    user_id = 2
-    logger.info("Requesting files for user %s", user_id)
-    result = requests.post(f"{SERVER_URL}/user/{user_id}/files")
-    print(result.text)
-
-
 if __name__ == "__main__":
-    add_user(name="Saloni", email="saloni@gmail.com")
+    create_task(1,"checker")

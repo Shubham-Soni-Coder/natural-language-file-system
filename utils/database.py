@@ -16,6 +16,13 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 
+
+def init_db():
+    from models import File, User, Task  # ensure all model classes are imported before creating tables
+    logger.info("Creating database tables if they do not exist")
+    Base.metadata.create_all(bind=engine)
+
+
 def get_db():
     db = SessionLocal()
     logger.debug("Opening database session")

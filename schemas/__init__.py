@@ -2,6 +2,7 @@ from .file_schema import FileCreate, FileRespone, SpecficFileDataRequest
 from .query_schema import QueryRequest
 from .tool_schema import ToolExecuteRequest
 from .user_schema import UserCreate, UserResponse
+from .task_schema import TaskCreate,TaskRespone
 
 __all__ = [
     "FileCreate",
@@ -11,4 +12,7 @@ __all__ = [
     "ToolExecuteRequest",
     "UserCreate",
     "UserResponse",
+    "TaskCreate",
+    "TaskRespone"
 ]
+

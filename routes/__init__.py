@@ -4,6 +4,7 @@ from .query_router import route as query_router
 from .server_router import route as server_router
 from .user_router import route as user_router
 from .file_router import route as file_router
+from .task_router import route as task_router
 
 __all__ = [
     "tools_router",
@@ -12,4 +13,5 @@ __all__ = [
     "server_router",
     "user_router",
     "file_router",
+    "task_router"
 ]
