@@ -19,3 +19,5 @@ class Task(Base):
     created_at = Column(TIMESTAMP,server_default=func.now())
     updated_at = Column(TIMESTAMP,server_default=func.now(),onupdate=func.now())
 
+    def __repr__(self):
+        return f"Task(id={self.id}, user_id={self.user_id}, task_type='{self.task_type}', status='{self.status}')"

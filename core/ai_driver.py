@@ -5,13 +5,13 @@ from google.genai import types
 import json
 from utils import main_logger as logger, settings
 
-class AiHandler:
+class AiDriver:
 
     def __init__(self):
 
         self.api_key = settings.GEMINI_API_KEY
         self.client = genai.Client(api_key=self.api_key)
-        logger.info("AiHandler initialized")
+        logger.info("AiDriver initialized")
 
     def build_prompt(self, tools):
         ALLOWED_CATEGORIES = ["image", "video", "documents"]
@@ -71,6 +71,6 @@ if __name__ == "__main__":
 
     tools = MCPRegistry().get_tools()
     user_input = input("Enter your query : ")
-    ai = AiHandler()
+    ai = AiDriver()
     result = ai.run_ai(user_input, tools)
     logger.info("AI runner produced result: %s", result)

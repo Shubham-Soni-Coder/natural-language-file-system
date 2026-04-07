@@ -78,4 +78,4 @@ def create_task(user_id,task_type,input_data=None):
     print(response.text)
 
 if __name__ == "__main__":
-    create_task(1,"checker")
+    create_task(1,"Saver")
