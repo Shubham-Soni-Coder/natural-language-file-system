@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from schemas import FileCreate, FileRespone
+from schemas import FileCreate, FileResponse
 from app import DataBaseDep
 from services import FileService
 from utils import main_logger as logger
@@ -17,10 +17,10 @@ def get_files(db: DataBaseDep):
     return files
 
 
-@route.post("/files", response_model=FileRespone)
+@route.post("/files", response_model=FileResponse)
 def create_files(request: FileCreate, db: DataBaseDep):
     """Create a new file record via FileService"""
-    logger.info("Creating file record: %s for user %s", request.filename, request.user_id)
+    logger.info("Creating file record: %s for user %s", request.name, request.user_id)
     return FileService.create(db, request)
 
 

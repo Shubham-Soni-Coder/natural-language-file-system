@@ -4,7 +4,8 @@ from pathlib import Path
 import random
 from string import ascii_letters
 from utils import main_logger as logger
-
+import mimetypes
+import hashlib
 
 class FileUtils:
     extensions = {
@@ -42,6 +43,19 @@ class FileUtils:
             logger.error("Folder not found: %s", self.folder_name)
             raise FileNotFoundError("Folder not found")
 
+    @staticmethod
+    def get_file_hash(file_path:Path):
+        """Generate SHA256 hjashth hash of a file to check for uniquencess."""
+        sha256_hash = hashlib.sha256()
+        try:
+            with open(file_path,"rb") as f:
+                while chunk := f.read(8192):
+                    sha256_hash.update(chunk)
+            file_hash = sha256_hash.hexdigest()
+            return file_hash
+        except Exception as e:
+            logger.error("Error generating hash for %s:%s", file_path,e)
+            return ""
     def analyze_folder(self):
         logger.info("Starting folder analysis: %s", self.folder_name)
         for path in self.folder_name.rglob("*"):
@@ -49,8 +63,20 @@ class FileUtils:
                 size = path.stat().st_size
                 self.results["total_files"] += 1
                 self.results["total_size"] += size
+                
+                # collect detailed file info for syncing 
+                file_info = {
+                    "name":path.name,
+                    "path":str(path.absolute()),
+                    "size":size,
+                    "mime_type":mimetypes.guess_type(str(path))[0],
+                    "extension":path.suffix.lower(),
+                    "hash":self.get_file_hash(path)
+                }
+                self.results["files"].append(file_info)
                 self.category_files(path)
-                self.largest_file(path, size)
+                self.largest_file(path,size)
+
 
         logger.info(
             "Folder analysis complete: %s files, %s bytes total",

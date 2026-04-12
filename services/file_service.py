@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from models import File
-from schemas import FileCreate, FileRespone
+from schemas import FileCreate, FileResponse
 from utils import main_logger as logger
 
 
@@ -55,8 +55,15 @@ class FileService:
         Returns:
             Created File record
         """
-        logger.info("FileService: Creating file record: %s for user %s", data.filename, data.user_id)
-        file = File(filename=data.filename, user_id=data.user_id)
+        logger.info("FileService: Creating file record: %s for user %s", data.name, data.user_id)
+        file = File(name=data.name,
+                    path=data.path,
+                    size=data.size,
+                    mime_type=data.mime_type,
+                    extension=data.extension,
+                    hash=data.hash,
+                    user_id=data.user_id,
+                    status=data.status)
         db.add(file)
         db.commit()
         db.refresh(file)

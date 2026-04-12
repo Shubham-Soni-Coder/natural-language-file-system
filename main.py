@@ -54,10 +54,12 @@ def start_client() -> None:
         try:
             user_input = input("\nEnter Query (or type 'exit'): ").strip()
 
+
             if user_input.lower() == "exit":
                 logger.info("Client session ended by user")
                 print("Thanks for using the AI System!")
                 break
+
 
             if not user_input:
                 continue
@@ -70,12 +72,12 @@ def start_client() -> None:
             break
 
 
-def create_task(user_id,task_type,input_data=None):
-    logger.info("Adding tasks : %s for  user %s",task_type,user_id)
+def add_file(name,path,size,mime_type,extension,hash,user_id,status="active") -> None:
+    logger.info("Adding file: %s for user %s", name, user_id)
     response = requests.post(
-        f"{SERVER_URL}/tasks",json={"user_id":user_id,"task_type":task_type,"input_data":input_data}
+        f"{SERVER_URL}/files", json={"name":name,"path":path,"size":size,"mime_type":mime_type,"extension":extension,"hash":hash,"user_id":user_id,"status":status}
     )
     print(response.text)
 
 if __name__ == "__main__":
-    create_task(1,"Saver once agian")
+    add_file("namer.txt","E:/",12,"text_file",".txt","123bac",1)

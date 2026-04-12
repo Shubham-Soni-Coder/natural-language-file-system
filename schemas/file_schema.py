@@ -1,16 +1,41 @@
 from pydantic import BaseModel
+from datetime import datetime 
+from typing import Optional 
 
 
 class FileCreate(BaseModel):
-    filename: str
-    user_id: int
+    name:str
+    path:str
+    size:int
+    mime_type:str
+    extension:str
+    hash:str
+    user_id:int
+    status:Optional[str] = "active"
 
+class FileResponse(BaseModel):
+    id : int
+    name:str
+    path:str
+    mime_type:str
+    extension:str
+    hash:str
+    user_id:int
+    created_at:datetime
+    updated_at:datetime
+    status:str
 
-class FileRespone(BaseModel):
-    id: int
-    filename: str
-    user_id: int
+class FileUpdate(BaseModel):
+    name: Optional[str] = None
+    path: Optional[str] = None
+    size: Optional[int] = None
+    mime_type: Optional[str] = None
+    extension: Optional[str] = None
+    hash: Optional[str] = None
+    status: Optional[str] = None
 
-
-class SpecficFileDataRequest(BaseModel):
-    user_id: int
+class FileListRequest(BaseModel):
+    user_id :int
+    status:Optional[str] = "active"
+    limit:int=100
+    offset:int = 0 
