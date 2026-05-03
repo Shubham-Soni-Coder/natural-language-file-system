@@ -4,16 +4,22 @@ from typing import Annotated
 from core import MCPRegistry, AiDriver
 from utils import get_db, main_logger as logger
 from sqlalchemy.orm import Session
+from utils import SessionLocal
+
+db = SessionLocal()
 
 # 1. Initialize at once when the server is starting
-mcp_instance = MCPRegistry()
 ai_instance = AiDriver()
 
 
 # Dependency provider functions
-def get_mcp() -> MCPRegistry:
+def get_mcp(db:Session=Depends(get_db)) -> MCPRegistry:
     logger.debug("Providing MCPRegistry dependency instance")
-    return mcp_instance
+    user_id = 1 
+    return MCPRegistry(
+        db=db,
+        user_id=user_id
+    )
 
 
 def get_ai() -> AiDriver:

@@ -12,7 +12,7 @@ class File(Base):
     size = Column(Integer,nullable=False)
     mime_type = Column(String,nullable=False)
     extension = Column(String,nullable=False)
-    hash = Column(String,nullable=False)
+    hash = Column(String,nullable=True,index=True)
 
     created_at = Column(TIMESTAMP,server_default=func.now())
     updated_at = Column(TIMESTAMP,server_default=func.now(),onupdate=func.now())

@@ -27,7 +27,7 @@ def get_db():
     db = SessionLocal()
     logger.debug("Opening database session")
     try:
-        yield db
+        yield db    
     finally:
         db.close()
         logger.debug("Database session closed")

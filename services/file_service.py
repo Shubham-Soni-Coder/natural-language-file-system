@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from models import File
 from schemas import FileCreate, FileResponse
 from utils import main_logger as logger
-
+from sqlalchemy.dialects.postgresql import insert
 
 class FileService:
     """
@@ -41,7 +41,7 @@ class FileService:
         logger.info("FileService: Fetching files for user_id=%s", user_id)
         files = db.query(File).filter(File.user_id == user_id).all()
         logger.debug("FileService: Found %s files for user_id=%s", len(files), user_id)
-        return files
+        return files 
 
     @staticmethod
     def create(db: Session, data: FileCreate):
@@ -122,3 +122,70 @@ class FileService:
         db.refresh(file)
         logger.debug("FileService: File updated successfully: id=%s", file_id)
         return file
+
+    @staticmethod
+    def validate_File_Data(data:dict)->bool:
+        # ------------------Basic Validation-------
+        if not data.get("name"):
+            logger.warning("Skipping File: missing name | data=%s",data)
+            return False
+        if not data.get("path"):
+            logger.warning("Skipping file: missing path | nam=%s",data.get("name"))
+            return False
+        if data.get("size",0) < 0:
+            logger.warning("Skipping file :invalid size | path=%s size=%s",
+            data.get("path"),data.get("size"))
+            return False
+        return True
+    
+    @staticmethod
+    def prepare_file_data(data:dict,user_id:int) -> dict:
+        return {
+            "name":data["name"],
+            "path":data["path"],
+            "size":data["size"],
+            "mime_type":data.get("mime_type"),
+            "extension":data.get("extension"),
+            "hash":data.get("hash"),
+            "user_id":user_id,
+            "status":data.get("status","active")
+        }
+
+    @staticmethod
+    def insert_batch(db:Session,batch:int):
+        if not batch:
+            return
+
+        stmt = insert(File).values(batch)
+
+        stmt = stmt.on_conflict_do_nothing(
+            index_elements=["path"]
+        )
+        try:
+            db.execute(stmt)
+            db.commit()
+            logger.info("Inserted batch of %s files (duplicates ignored)",len(batch))
+        except Exception as e:
+            logger.exception("Batch insert falied | error=%s",str(e))
+            db.rollback()
+
+    @staticmethod
+    def ingest(db:Session,generator, user_id: int, batch_size: int = 100):
+        batch = []
+
+        for data in generator:
+            # validation 
+            if not FileService.validate_File_Data(data):
+                continue
+
+            prepared = FileService.prepare_file_data(data,user_id)
+            batch.append(prepared)
+
+            if len(batch) >= batch_size:
+                FileService.insert_batch(db,batch)
+                batch.clear()
+        if batch:
+            FileService.insert_batch(db,batch)
+        
+        logger.info("File ingestion completed")
+        

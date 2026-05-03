@@ -1,51 +1,37 @@
-import logging
-import os
 from pathlib import Path
-import random
-from string import ascii_letters
-from utils import main_logger as logger
-import mimetypes
 import hashlib
+import mimetypes
+from typing import Generator,Dict,Optional
+from utils import main_logger as logger
 
 class FileUtils:
-    extensions = {
-        "image": {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"},
-        "video": {".mp4", ".avi", ".mkv", ".mov", ".wmv"},
-        "documents": {
-            ".pdf",
-            ".doc",
-            ".docx",
-            ".txt",
-            ".xls",
-            ".xlsx",
-            ".ppt",
-            ".pptx",
-        },
-    }
-
-    def __init__(self, folder_name: Path):
-        self.folder_name = folder_name
-        self.results = {
-            "counts": {"image": 0, "video": 0, "documents": 0, "extra": 0},
-            "total_files": 0,
-            "total_size": 0,
-            "files": [],
-            "largest_file": {"path": "", "size": 0},
-        }
-        logger.info("Initializing FileUtils for folder: %s", folder_name)
+    
+    def __init__(self, folder: str="test_folder"):
+        self.folder = Path(folder)
+        self.result = {}
+        logger.info("Initializing FileUtils for folder: %s", folder)
         self.check_folder()
 
     def check_folder(self):
-        if not isinstance(self.folder_name, Path):
-            self.folder_name = Path(self.folder_name)
-        logger.debug("Checking folder path: %s", self.folder_name)
-        if not os.path.exists(self.folder_name):
-            logger.error("Folder not found: %s", self.folder_name)
-            raise FileNotFoundError("Folder not found")
+        if not self.folder.exists() or not self.folder.is_dir():
+            logger.error(f"Invalid Folder : {self.folder}")
+            raise FileNotFoundError(f"Folder Not Found : {self.folder}")
 
-    @staticmethod
-    def get_file_hash(file_path:Path):
+    def get_extension(self,path:Path)->str:
+        return path.suffix.lower().replace(".","")
+    
+    def get_mine_type(self,path:Path)->str:
+        mime_type,_ = mimetypes.guess_type(str(path))
+        return mime_type or "applcation/octet_stream"
+    
+    def get_file_size(self,path:Path)->str:
+        return path.stat().st_size
+
+    def get_file_hash(self,path:Path,enable:bool=True)->Optional[str]:
         """Generate SHA256 hjashth hash of a file to check for uniquencess."""
+        if not enable:
+            return None
+
         sha256_hash = hashlib.sha256()
         try:
             with open(file_path,"rb") as f:
@@ -55,119 +41,39 @@ class FileUtils:
             return file_hash
         except Exception as e:
             logger.error("Error generating hash for %s:%s", file_path,e)
-            return ""
-    def analyze_folder(self):
-        logger.info("Starting folder analysis: %s", self.folder_name)
-        for path in self.folder_name.rglob("*"):
+            return None
+    
+    def build_file_metadata(
+        self, path: Path, include_hash: bool = False
+    ) -> Dict:
+
+        try:
+            return {
+                "name": path.name,
+                "path": str(path.resolve()),
+                "size": self.get_file_size(path),
+                "mime_type": self.get_mine_type(path),
+                "extension": self.get_extension(path),
+                "hash": self.get_file_hash(path, include_hash),
+            }
+        except Exception as e:
+            logger.error(f"Metadata error for {path}: {e}")
+            return {}
+
+
+
+    def scan(self, include_hash: bool = False) -> Generator[Dict, None, None]:
+        logger.info(f"Scanning folder: {self.folder}")
+
+        for path in self.folder.rglob("*"):
             if path.is_file():
-                size = path.stat().st_size
-                self.results["total_files"] += 1
-                self.results["total_size"] += size
-                
-                # collect detailed file info for syncing 
-                file_info = {
-                    "name":path.name,
-                    "path":str(path.absolute()),
-                    "size":size,
-                    "mime_type":mimetypes.guess_type(str(path))[0],
-                    "extension":path.suffix.lower(),
-                    "hash":self.get_file_hash(path)
-                }
-                self.results["files"].append(file_info)
-                self.category_files(path)
-                self.largest_file(path,size)
+                metadata = self.build_file_metadata(path, include_hash)
 
+                if metadata:  # skip broken files
+                    yield metadata
 
-        logger.info(
-            "Folder analysis complete: %s files, %s bytes total",
-            self.results["total_files"],
-            self.results["total_size"],
-        )
-        return self.results
-
-    def category_files(self, path: Path) -> None:
-        """
-        Category files by extension
-        """
-        ext = path.suffix.lower()
-        logger.debug("Categorizing file %s with extension %s", path, ext)
-        found = False
-        for cat, ext_set in self.extensions.items():
-            if ext in ext_set:
-                self.results["counts"][cat] += 1
-                found = True
-                break
-        if not found:
-            self.results["counts"]["extra"] += 1
-            logger.debug("File categorized as extra: %s", path)
-
-    def largest_file(self, path, size) -> None:
-        """
-        Find the largest files in a folder and its subfolders.
-        """
-        current_max_size = self.results["largest_file"]["size"]
-        if size > current_max_size:
-            self.results["largest_file"]["path"] = str(path)
-            self.results["largest_file"]["size"] = size
-            logger.debug("New largest file found: %s (%s bytes)", path, size)
-
-    def size_converter(self, size=None) -> str:
-        if size is None:
-            size = self.results["largest_file"]["size"]
-        for unit in ["bytes", "KB", "MB", "GB", "TB"]:
-            if size < 1024:
-                result = f"{size:.2f} {unit}" if unit != "bytes" else f"{size} {unit}"
-                logger.debug("Converted size %s to %s", size, result)
-                return result
-            size /= 1024
-
-        result = f"{size:.2f} PB"
-        logger.debug("Converted size to %s", result)
-        return result
-
-    def presentation(self):
-        res = self.results
-        total_files = res["total_files"]
-        total_size = self.size_converter(res["total_size"])
-
-        img = res["counts"]["image"]
-        vid = res["counts"]["video"]
-        doc = res["counts"]["documents"]
-        oth = res["counts"]["extra"]
-
-        path_str = res["largest_file"]["path"]
-        l_file_name = Path(path_str) if path_str else "None"
-        l_file_size = self.size_converter(res["largest_file"]["size"])
-
-        self.report = f"""
-        Folder Report
-
-
-        Total Files : {total_files}
-        Total Size  : {total_size}
-
-        Categories:
-        - Images    : {img}
-        - Videos    : {vid}
-        - Documents : {doc}
-        - Others    : {oth}
-
-        Largest File:
-        {l_file_name.name} ({l_file_size})
-        {"="*30}
-        """
-
-        logger.info("Folder report generated")
-        return self.report
-
-    def main(self):
-        self.analyze_folder()
-        report = self.presentation()
-        logger.info("FileUtils main completed and report generated")
-        print(report)
-
+        logger.info("Scanning completed")
 
 if __name__ == "__main__":
-    folder_name = Path("test_folder")
-    tools = FileUtils(folder_name)
-    tools.main()
+    scanner = FileUtils()
+    scanner.scan(include_hash=False)

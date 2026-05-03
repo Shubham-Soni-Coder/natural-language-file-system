@@ -1,6 +1,6 @@
 from .Config import settings
 from .logging_config import main_logger, setup_logging
-from .database import engine, SessionLocal, Base, get_db
+from .database import engine, SessionLocal, Base, get_db,init_db
 
 __all__ = [
     "Config",
@@ -10,4 +10,5 @@ __all__ = [
     "SessionLocal",
     "Base",
     "get_db",
+    "init_db"
 ]

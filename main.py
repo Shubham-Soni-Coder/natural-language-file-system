@@ -80,4 +80,4 @@ def add_file(name,path,size,mime_type,extension,hash,user_id,status="active") ->
     print(response.text)
 
 if __name__ == "__main__":
-    add_file("namer.txt","E:/",12,"text_file",".txt","123bac",1)
+    start_client()

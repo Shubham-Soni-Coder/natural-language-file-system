@@ -9,21 +9,29 @@ class FileCreate(BaseModel):
     size:int
     mime_type:str
     extension:str
-    hash:str
+    hash:Optional[str] = None
     user_id:int
     status:Optional[str] = "active"
+
+    @classmethod
+    def normalize_extension(cls, v):
+        return v.lower().replace(".", "")
 
 class FileResponse(BaseModel):
     id : int
     name:str
     path:str
+    size:int
     mime_type:str
     extension:str
-    hash:str
+    hash:Optional[str] = None
     user_id:int
     created_at:datetime
     updated_at:datetime
     status:str
+
+    class Config:
+        from_attributes = True  
 
 class FileUpdate(BaseModel):
     name: Optional[str] = None
