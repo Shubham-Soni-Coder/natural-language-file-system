@@ -6,7 +6,7 @@ from utils import main_logger as logger
 
 class FileUtils:
     
-    def __init__(self, folder: str="test_folder"):
+    def __init__(self, folder:str):
         self.folder = Path(folder)
         self.result = {}
         logger.info("Initializing FileUtils for folder: %s", folder)
@@ -64,16 +64,36 @@ class FileUtils:
 
     def scan(self, include_hash: bool = False) -> Generator[Dict, None, None]:
         logger.info(f"Scanning folder: {self.folder}")
+        SKIP_FOLDERS = {
+            "__pycache__",
+            ".git",
+            "venv",
+            ".venv",
+            "node_modules",
+            ".env"
+        }
 
         for path in self.folder.rglob("*"):
+
+            if any(folder in path.parts for folder in SKIP_FOLDERS):
+                # logger.debug(f"Skipped '{path}' (reason: system/generated folder)")
+                continue
+
+
             if path.is_file():
                 metadata = self.build_file_metadata(path, include_hash)
 
                 if metadata:  # skip broken files
                     yield metadata
+                else:
+                    # logger.warning(f"Skipped '{path}' (reason: metadata extraction failed)") 
+                    continue
 
         logger.info("Scanning completed")
 
 if __name__ == "__main__":
-    scanner = FileUtils()
-    scanner.scan(include_hash=False)
+    folder_path = "E:/File_mangement_system"
+    scanner = FileUtils(folder_path)
+    result = scanner.scan(include_hash=False)
+    for metadata in result:
+        print(metadata)

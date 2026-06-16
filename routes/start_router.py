@@ -9,7 +9,8 @@ route = APIRouter()
 @route.on_event("startup")
 def startup_event():
     db = SessionLocal()
-    scanner = FileUtils()
+    foldername = "E:/File_mangement_system"
+    scanner = FileUtils(foldername)
     try:
         generator = scanner.scan()
         FileService.ingest(db,generator,user_id=1)

@@ -19,7 +19,7 @@ class AiDriver:
         logger.debug("Building AI prompt for tools: %s", tools_json)
 
         return f"""
-        You are a tool selection system.
+        You area tool selection system.
 
         Available tools:
         {tools_json}

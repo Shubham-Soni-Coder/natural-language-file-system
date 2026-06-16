@@ -35,7 +35,7 @@ class MCPRegistry:
                 "parameters": {
                     "category": "string",
                 },
-            },
+            }, 
             "get_summary": {
                 "func": self.get_summary,
                 "description": "Returns a complete overview of the folder analysis.",
@@ -88,7 +88,7 @@ class MCPRegistry:
 
     def get_largest_file(self) -> str:
         logger.debug("Retrieving largest file details")
-        largest = self.tools.get_largest_file(self,db,self.user_id)
+        largest = self.tools.get_largest_file(self.db,self.user_id)
 
         if not largest:
             logger.warning("No largest file found for user_id=%s",self.user_id)       
