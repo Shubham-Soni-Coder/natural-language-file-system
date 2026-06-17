@@ -6,9 +6,11 @@ from typing import Optional
 class FileCreate(BaseModel):
     name:str
     path:str
+    parent_path:Optional[str] = None
+    is_folder:bool = False
     size:int
-    mime_type:str
-    extension:str
+    mime_type:Optional[str] = None
+    extension:Optional[str] = None
     hash:Optional[str] = None
     user_id:int
     status:Optional[str] = "active"
@@ -21,6 +23,8 @@ class FileResponse(BaseModel):
     id : int
     name:str
     path:str
+    parent_path:Optional[str] = None
+    is_folder:bool
     size:int
     mime_type:str
     extension:str
@@ -36,6 +40,8 @@ class FileResponse(BaseModel):
 class FileUpdate(BaseModel):
     name: Optional[str] = None
     path: Optional[str] = None
+    parent_path:Optional[str] = None
+    is_folder:bool = False
     size: Optional[int] = None
     mime_type: Optional[str] = None
     extension: Optional[str] = None

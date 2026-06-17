@@ -143,6 +143,8 @@ class FileService:
         return {
             "name":data["name"],
             "path":data["path"],
+            "parent_path":data["parent_path"],
+            "is_folder":data["is_folder"],
             "size":data["size"],
             "mime_type":data.get("mime_type"),
             "extension":data.get("extension"),
@@ -176,6 +178,8 @@ class FileService:
         for data in generator:
             # validation 
             if not FileService.validate_File_Data(data):
+                filename = data.get("name","UnknownFile")
+                logger.warning(f"validation falied for '{filename}'. Skipping this file")
                 continue
 
             prepared = FileService.prepare_file_data(data,user_id)

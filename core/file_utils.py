@@ -20,12 +20,12 @@ class FileUtils:
     def get_extension(self,path:Path)->str:
         return path.suffix.lower().replace(".","")
     
-    def get_mine_type(self,path:Path)->str:
+    def get_mime_type(self,path:Path)->str:
         mime_type,_ = mimetypes.guess_type(str(path))
-        return mime_type or "applcation/octet_stream"
+        return mime_type or "application/octet_stream"
     
-    def get_file_size(self,path:Path)->str:
-        return path.stat().st_size
+    def get_file_size(self,path:Path)->int:
+        return path.stat().st_size 
 
     def get_file_hash(self,path:Path,enable:bool=True)->Optional[str]:
         """Generate SHA256 hjashth hash of a file to check for uniquencess."""
@@ -34,27 +34,32 @@ class FileUtils:
 
         sha256_hash = hashlib.sha256()
         try:
-            with open(file_path,"rb") as f:
+            with open(path,"rb") as f:
                 while chunk := f.read(8192):
                     sha256_hash.update(chunk)
             file_hash = sha256_hash.hexdigest()
             return file_hash
         except Exception as e:
-            logger.error("Error generating hash for %s:%s", file_path,e)
+            logger.error("Error generating hash for %s:%s", path,e)
             return None
     
     def build_file_metadata(
         self, path: Path, include_hash: bool = False
-    ) -> Dict:
-
+    ) -> Dict: 
         try:
+            resolved_path = path.resolve()
+            parent = resolved_path.parent
+
+            
             return {
                 "name": path.name,
-                "path": str(path.resolve()),
-                "size": self.get_file_size(path),
-                "mime_type": self.get_mine_type(path),
-                "extension": self.get_extension(path),
-                "hash": self.get_file_hash(path, include_hash),
+                "path": str(resolved_path),
+                "parent_path": str(parent) if parent != resolved_path else None,
+                "is_folder": path.is_dir(),
+                "size": self.get_file_size(path) if path.is_file() else 0,
+                "mime_type": self.get_mime_type(path) if path.is_file() else None,
+                "extension": self.get_extension(path) if path.is_file() else None,
+                "hash": self.get_file_hash(path, include_hash) if path.is_file() else None,
             }
         except Exception as e:
             logger.error(f"Metadata error for {path}: {e}")
@@ -70,7 +75,10 @@ class FileUtils:
             "venv",
             ".venv",
             "node_modules",
-            ".env"
+            ".env",
+            ".gitignore",
+            "logs",
+            "test_folder"
         }
 
         for path in self.folder.rglob("*"):
@@ -80,20 +88,36 @@ class FileUtils:
                 continue
 
 
-            if path.is_file():
-                metadata = self.build_file_metadata(path, include_hash)
 
-                if metadata:  # skip broken files
-                    yield metadata
-                else:
-                    # logger.warning(f"Skipped '{path}' (reason: metadata extraction failed)") 
-                    continue
+            metadata = self.build_file_metadata(path, include_hash if path.is_file() else False)
+
+            if metadata:  # skip broken files
+                yield metadata
+            else:
+                # logger.warning(f"Skipped '{path}' (reason: metadata extraction failed)") 
+                continue
 
         logger.info("Scanning completed")
 
 if __name__ == "__main__":
+    import csv 
     folder_path = "E:/File_mangement_system"
+    output_csv = "File_metadata.csv"
+
     scanner = FileUtils(folder_path)
     result = scanner.scan(include_hash=False)
-    for metadata in result:
-        print(metadata)
+    
+    headers = ["name","path","parent_path","is_folder","size","mime_type","extension","hash"]
+
+    try:
+        with open(output_csv,mode="w",newline="",encoding="utf-8") as csv_file:
+            writer = csv.DictWriter(csv_file,fieldnames=headers)
+
+            writer.writeheader()
+
+            for metadata in result:
+                filtered_metadata = {k: v for k,v in metadata.items() if k in headers}
+                writer.writerow(filtered_metadata)
+        print(f"Success!")
+    except Exception as e:
+        print(f"An error occurred while writing to csv : {e}")
