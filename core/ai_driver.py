@@ -14,12 +14,11 @@ class AiDriver:
         logger.info("AiDriver initialized")
 
     def build_prompt(self, tools):
-        ALLOWED_CATEGORIES = ["image", "video", "documents"]
-        tools_json = json.dumps(tools, indent=2)
         logger.debug("Building AI prompt for tools: %s", tools_json)
+        tools_json = json.dumps(tools, indent=2)
 
         return f"""
-        You area tool selection system.
+        You are a tool selection system.
 
         Available tools:
         {tools_json}
@@ -27,12 +26,30 @@ class AiDriver:
         Rules:
         - Always return valid JSON
         - Do NOT explain anything
-        - category must be in : {ALLOWED_CATEGORIES}
-        - You can return multiple tools if needed 
-        - Only output:
+        - Select the most appropriate tool
+        - You may return multiple tools if required
+        - When the user refers to a file type, use a generic file_type value
+        - Examples of file_type:
+        - python
+        - image
+        - video
+        - pdf
+        - document
+        - audio
+        - archive
+        - Do not generate SQL
+        - Do not generate file paths unless explicitly requested
+
+        Only output:
+
         {{
-            "tools":[
-                {{"tool":"...","argument":{{...}}}}
+        "tools": [
+            {{
+            "tool": "...",
+            "argument": {{
+                ...
+                }}
+            }}
             ]
         }}
         """
@@ -67,10 +84,9 @@ class AiDriver:
 
 
 if __name__ == "__main__":
-    from core import MCPRegistry
+    from mcp_registry import MCPRegistry
 
     tools = MCPRegistry().get_tools()
     user_input = input("Enter your query : ")
     ai = AiDriver()
     result = ai.run_ai(user_input, tools)
-    logger.info("AI runner produced result: %s", result)

@@ -11,7 +11,7 @@ app = FastAPI(title="AI File Management System")
 logger.info("FastAPI application initialized")
 
 # Register individual specialized routers
-app.include_router(start_router)
+app.include_router(start_router) 
 app.include_router(tools_router)
 app.include_router(execute_router)
 app.include_router(query_router)

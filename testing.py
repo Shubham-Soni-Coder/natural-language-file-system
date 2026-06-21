@@ -1,12 +1,6 @@
-from services import TaskService as Ts
-from utils import SessionLocal
+from core import AiDriver,MCPRegistry
 
-
-# temp db 
-db = SessionLocal()
-
-
-# get child tasks 
-# print(TaskService.get_child_tasks(db,1))
-
-print(Ts.update_task(db,1,"complete"))
+tools = MCPRegistry().get_tools()
+user_input = input("Enter your query : ")
+ai = AiDriver()
+result = ai.run_ai(user_input, tools)
