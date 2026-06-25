@@ -18,8 +18,12 @@ class FileUtils:
             raise FileNotFoundError(f"Folder Not Found : {self.folder}")
 
     def get_extension(self,path:Path)->str:
-        return path.suffix.lower().replace(".","")
-    
+        if path.suffix:
+            return path.suffix[1:].lower()
+        elif path.name.startswith(".") or path.name.count(".") == 1:
+            return path.name[1:].lower()
+        return ""
+
     def get_mime_type(self,path:Path)->str:
         mime_type,_ = mimetypes.guess_type(str(path))
         return mime_type or "application/octet_stream"

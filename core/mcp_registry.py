@@ -31,7 +31,7 @@ class MCPRegistry:
             },
             "get_category_count": {
                 "func": self.get_category_count,
-                "description": "Returns the count of files for a specific category (e.g., 'Images', 'Docs',).",
+                "description": "Returns the count of files for a specific category or extension. Category can be a file type like python, image, video, document or a raw extension like py, txt, pdf.",
                 "parameters": {
                     "category": "string",
                 },

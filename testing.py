@@ -1,6 +1,7 @@
-from core import AiDriver,MCPRegistry
+from utils import SessionLocal
+from core import MCPRegistry,FileUtils
+from services import DBService
 
-tools = MCPRegistry().get_tools()
-user_input = input("Enter your query : ")
-ai = AiDriver()
-result = ai.run_ai(user_input, tools)
+# print(MCPRegistry(SessionLocal(),1).get_summary())
+# print(DBService.get_summary_stats(SessionLocal(),1))
+print(DBService.get_all_category_count(SessionLocal(),1))

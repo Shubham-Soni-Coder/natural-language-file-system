@@ -14,8 +14,8 @@ class AiDriver:
         logger.info("AiDriver initialized")
 
     def build_prompt(self, tools):
-        logger.debug("Building AI prompt for tools: %s", tools_json)
         tools_json = json.dumps(tools, indent=2)
+        logger.debug("Building AI prompt for tools: %s", tools_json)
 
         return f"""
         You are a tool selection system.
@@ -28,15 +28,10 @@ class AiDriver:
         - Do NOT explain anything
         - Select the most appropriate tool
         - You may return multiple tools if required
-        - When the user refers to a file type, use a generic file_type value
-        - Examples of file_type:
-        - python
-        - image
-        - video
-        - pdf
-        - document
-        - audio
-        - archive
+        - category may be a file type such as python, image, video, document, audio, archive
+        - category may also be a raw extension like py, txt, pdf
+        - The system maps file type names to database extensions for counting
+        - Use the tool get_category_count when the user asks for type or extension counts
         - Do not generate SQL
         - Do not generate file paths unless explicitly requested
 
