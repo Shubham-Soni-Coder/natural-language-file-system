@@ -11,33 +11,107 @@ class DBService:
     """
 
     @staticmethod
-    def file_filters(user_id: int):
-        """Return common filters used for file-only queries."""
+    def base_filters(user_id: int,is_folder:bool |None = None ):
+        """
+        Return the common database filters for a user's records.
+
+        Args:
+            user_id: ID of the user whose records are filtered.
+
+        Returns:
+            A list of SQLAlchemy filter expressions.
+        """
         filters = [
             File.user_id == user_id,
-            File.is_folder == False,
         ]
-        logger.debug("DBService: Using file-only filters for user_id=%s", user_id)
+        logger.debug("Creating base filters for user_id=%s", user_id)
+
+        if is_folder is not None:
+            filters.append(File.is_folder.is_(is_folder))
+
         return filters
 
     @staticmethod
     def get_total_files(db: Session, user_id: int) -> int:
         logger.debug("DBService: Counting total files for user_id=%s", user_id)
-        stmt = select(func.count()).select_from(File).where(*DBService.file_filters(user_id))
+        stmt = select(func.count()).select_from(File).where(*DBService.base_filters(user_id,is_folder=False))
         return db.execute(stmt).scalar_one()
 
     @staticmethod
     def get_total_size(db: Session, user_id: int) -> int:
         logger.debug("DBService: Calculating total size for user_id=%s", user_id)
-        stmt = select(func.sum(File.size)).where(*DBService.file_filters(user_id))
+        stmt = select(func.sum(File.size)).where(*DBService.base_filters(user_id,is_folder=None))
         return db.execute(stmt).scalar_one() or 0
+
+    @staticmethod
+    def get_largest_files(db:Session,user_id:int,limit:int=5)->list[File]:
+        """
+        Return the largest files for a user.
+
+        Args:
+            db: Active database session.
+            user_id: ID of the user whose files are retrieved.
+            limit: Maximum number of files to return.
+
+        Returns:
+            list[File]: Files ordered by size in descending order.
+        """
+        logger.debug(
+            "DBService: Fetching %d largest files for user_id=%s",
+            limit,
+            user_id,
+        )
+
+        stmt = (
+        select(File)
+        .where(*DBService.base_filters(user_id, is_folder=False))
+        .order_by(desc(File.size))
+        .limit(limit)
+        )
+
+        return db.execute(stmt).scalars().all()
 
 
     @staticmethod
     def get_largest_file(db: Session, user_id: int) -> Optional[File]:
+        """
+        Return the largest file for a user.
+
+        Args:
+            db: Active database session.
+            user_id: ID of the user whose largest file is retrieved.
+
+        Returns:
+            Optional[File]: The largest file, or None if no files exist.
+        """
         logger.debug("DBService: Fetching largest file for user_id=%s", user_id)
-        stmt = select(File).where(*DBService.file_filters(user_id)).order_by(desc(File.size)).limit(1)
-        return db.execute(stmt).scalar_one_or_none()
+
+        files = DBService.get_largest_files(db, user_id, limit=1)
+        return files[0] if files else None
+
+    @staticmethod
+    def get_folder_count(db:Session,user_id:int) -> int:
+        logger.debug("Counting folders for user_id=%s", user_id)
+        """
+        Return the total number of folders for a user.
+
+        Args:
+            db: Active database session.
+            user_id: ID of the user whose folders are counted.
+
+        Returns:
+            Total number of folders.
+        """
+        stmt = (
+            select(func.count())
+            .where(
+                File.is_folder.is_(True),
+                *DBService.base_filters(user_id)
+            )
+        )
+
+        return db.execute(stmt).scalar_one()
+
 
     @staticmethod
     def normalize_category(category: str) -> str:
@@ -91,7 +165,7 @@ class DBService:
                 extensions,
             )
             stmt = select(func.count()).where(
-                *DBService.file_filters(user_id),
+                *DBService.base_filters(user_id),
                 File.extension.in_(extensions),
             )
         else:
@@ -100,7 +174,7 @@ class DBService:
                 normalized,
             )
             stmt = select(func.count()).where(
-                *DBService.file_filters(user_id),
+                *DBService.base_filters(user_id,is_folder=None),
                 File.extension == normalized,
             )
 
@@ -115,7 +189,7 @@ class DBService:
             File.extension,
             func.count().label("count")
         ).where(
-            *DBService.file_filters(user_id)
+            *DBService.base_filters(user_id)
         ).group_by(File.extension)
 
         result = db.execute(stmt).all()

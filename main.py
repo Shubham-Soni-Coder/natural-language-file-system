@@ -17,9 +17,7 @@ def display_results(response: requests.Response) -> None:
         return
 
     for result in results:
-        tool_name = result.get("tool")
         tool_output = result.get("result", result.get("error"))
-        print(f"\n--- Output from [{tool_name}] ---")
         print(f"{tool_output}")
 
 

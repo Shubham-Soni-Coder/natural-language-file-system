@@ -16,7 +16,7 @@ class MCPRegistry:
         self.tool_registry = {
             "get_total_files": {
                 "func": self.get_total_files,
-                "description": "Returns the total number of files in the scanned folder.",
+                "descri==ption": "Returns the total number of files in the scanned folder.",
                 "parameters": {},
             },
             "get_total_size": {
@@ -29,12 +29,24 @@ class MCPRegistry:
                 "description": "Identifies and returns the details of the largest file found.",
                 "parameters": {},
             },
+            "get_largest_files": {
+                "func": self.get_largest_files,
+                "description": "Retrieve the largest files for the current user, ordered by file size in descending order.",
+                "parameters": {
+                    "limit":"int"
+                },
+            },
             "get_category_count": {
                 "func": self.get_category_count,
                 "description": "Returns the count of files for a specific category or extension. Category can be a file type like python, image, video, document or a raw extension like py, txt, pdf.",
                 "parameters": {
                     "category": "string",
-                },
+                }
+            },
+            "get_folder_count": {
+                "func":self.get_folder_count,
+                "description":"Return the total number of subfolders in the specified directory.",
+                "parameters": {},
             }, 
             "get_summary": {
                 "func": self.get_summary,
@@ -109,6 +121,65 @@ class MCPRegistry:
         Size: {size}
         Location: {largest.path}
         """
+    
+    def get_largest_files(self,limit:int) ->str:
+        """
+        Retrieve and format the largest files for display.
+
+        Args:
+            limit: Maximum number of files to display.
+
+        Returns:
+            A formatted string containing the largest files and their sizes.
+        """
+        logger.debug("Retrieving top %d largest files", limit)
+
+        files = self.tools.get_largest_files(
+            self.db,
+            self.user_id,
+            limit,
+        )
+
+        if not files:
+            logger.warning(
+                "No files found for user_id=%s",
+                self.user_id,
+            )
+            return "No files found."
+
+        lines = []
+
+        for index, file in enumerate(files, start=1):
+            size = self.size_converter(file.size)
+
+            logger.debug(
+                "Largest file %d: name=%s, size=%s, path=%s",
+                index,
+                file.name,
+                size,
+                file.path,
+            )
+
+            lines.append(
+                f"{index}. {file.name}\n"
+                f"   Size: {size}\n"
+                f"   Path: {file.path}"
+            )
+
+        return "\n\n".join(lines)
+    
+    def get_folder_count(self)->int:
+        logger.debug("rerieving folder count")
+        folder_count = self.tools.get_folder_count(
+            self.db,
+            self.user_id
+        )
+        logger.debug(
+        "Found %d folders for user_id=%s",
+        self.user_id,
+        folder_count,
+        )
+        return folder_count
 
     def get_category_count(self, category):
         logger.debug("Retrieving category count: %s",category)
@@ -163,7 +234,7 @@ class MCPRegistry:
         return [
             {
                 "name": name,
-                "description": info["description"],
+                "description": info.get("description"),
                 "input_schema": info["parameters"],
             }
             for name, info in self.tool_registry.items()
