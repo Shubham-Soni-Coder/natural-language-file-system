@@ -1,6 +1,12 @@
-from services import DBService
 from utils import SessionLocal
+from pathlib import Path
+from services import DBService
 from core import MCPRegistry
 
-# print(DBService.get_largest_files(SessionLocal(),1,10))
-print(MCPRegistry(SessionLocal(),1).get_largest_files(10))
+db = SessionLocal()
+
+target_folder = "E:/"
+
+print(MCPRegistry(db,1).get_largest_folder(target_folder))
+print(MCPRegistry(db,1).get_largest_folders(target_folder,8))
+

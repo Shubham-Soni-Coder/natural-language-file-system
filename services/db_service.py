@@ -3,6 +3,8 @@ from sqlalchemy import func, select,desc
 from models import File,Task
 from utils import main_logger as logger
 from typing import Optional
+from pathlib import Path
+from collections import defaultdict
 
 class DBService:
     """
@@ -44,7 +46,7 @@ class DBService:
         return db.execute(stmt).scalar_one() or 0
 
     @staticmethod
-    def get_largest_files(db:Session,user_id:int,limit:int=5)->list[File]:
+    def get_largest_files(db:Session,user_id:int,limit:int)->list[File]:
         """
         Return the largest files for a user.
 
@@ -88,6 +90,141 @@ class DBService:
 
         files = DBService.get_largest_files(db, user_id, limit=1)
         return files[0] if files else None
+
+    @staticmethod
+    def get_largest_folders(db:Session,user_id:int,target_path:str,limit:int):
+        """
+        Get the largest direcrt child folders
+        
+        Args:
+            db:Database session
+            user_id : user id
+            target_path : Parent directory path.
+            limit : Number of folders to return.
+
+        Returns:
+            list[tuple]:list of (folder_path,size) tuples.
+        """
+
+        logger.debug(
+            "Retrieving top %s largest folders for user_id=%s",
+            limit,
+            user_id
+        )
+        
+        stmt = (
+            select(
+                File.name,
+                File.path,
+                File.parent_path,
+                File.size
+            )
+            .where(*DBService.base_filters(user_id,is_folder=False))
+        )
+
+        rows = db.execute(stmt).mappings().all()
+        folder_data = defaultdict(int)
+        target_path = Path(target_path)
+
+        for row in rows:
+            current_path = Path(row["parent_path"])
+            
+            while True:
+                if not current_path.is_relative_to(target_path):
+                    break
+                folder_data[current_path] += row["size"]
+                if current_path == target_path:
+                    break
+                current_path = current_path.parent
+            
+        clean_data = {
+            key:value
+            for key,value in folder_data.items()
+            if key!= target_path
+            }
+        sorted_data =  sorted(
+            clean_data.items(),
+            key=lambda item:item[1],
+            reverse=True
+        )
+        logger.info("Sorted data created : %d",len(sorted_data))
+        result = DBService.build_folder_response(db,user_id,sorted_data)
+
+        logger.info("Retrived %d largest folders",limit)
+        
+        return result[:limit]
+
+
+    @staticmethod
+    def get_largest_folder(db:Session,user_id:int,target_path:str):
+        """
+            get the largest direct child folder.
+
+            Args:
+                db:Database session.
+                user_id : User id.
+                targest_path : Parent directory path
+            
+            Returns:
+                tuple | None:
+            (folder_path,size) or None if no folder exists.
+        """
+        logger.debug(
+            "Retrueving largest folder for user_id=%s , target_path=%s",user_id,target_path
+        )
+        largest_folder = DBService.get_largest_folders(db,user_id,target_path,1)[0]
+        logger.info("Largest folder retrived successfully with largest file:%s",largest_folder)
+        return largest_folder
+
+    @staticmethod
+    def build_folder_response(
+        db:Session,
+        user_id:int,
+        sorted_data:list[tuple[Path,int]]
+    ) -> list[dict]:
+        paths = [str(path) for path,_ in sorted_data]
+        stmt = (
+            select(
+                File.name,
+                File.path,
+                File.parent_path
+            ).where(
+                *DBService.base_filters(user_id,is_folder=True),
+                File.path.in_(paths)
+                )
+            )
+        rows = db.execute(stmt).mappings().all()
+
+        folder_map = {
+            row["path"]:row
+            for row in rows
+        }
+        logger.debug("Folder_map created : %d",len(folder_map))
+        result = []
+
+        for path,size in sorted_data:
+            folder = folder_map.get(str(path))
+
+            if folder is None:
+                result.append({
+                    "name":path.name,
+                    "path":str(path),
+                    "parent_path":str(path.parent),
+                    "size":size
+                })
+            
+            else:    
+                result.append({
+                    "name": folder["name"],
+                    "path": folder["path"],
+                    "parent_path": folder["parent_path"],
+                    "size":size
+                })
+        
+        logger.debug("Result generated : %d",len(result))
+        return result
+
+
 
     @staticmethod
     def get_folder_count(db:Session,user_id:int) -> int:

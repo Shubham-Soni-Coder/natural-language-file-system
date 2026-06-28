@@ -36,6 +36,21 @@ class MCPRegistry:
                     "limit":"int"
                 },
             },
+            "get_largest_folders":{
+                "func": self.get_largest_folders,
+                "description":"Retrieve the largest direct child folders within the specified directory, sorted by size in descending order.",
+                "parameters":{
+                    "target_folder":"string",
+                    "limit":"int",
+                }
+            },
+            "get_largest_folder":{
+                "func": self.get_largest_folder,
+                "description":"retrieve the largest direct child folder within the specified directory.",
+                "parameters":{
+                    "target_folder":"string",
+                }
+            },
             "get_category_count": {
                 "func": self.get_category_count,
                 "description": "Returns the count of files for a specific category or extension. Category can be a file type like python, image, video, document or a raw extension like py, txt, pdf.",
@@ -94,6 +109,7 @@ class MCPRegistry:
         
 
     def get_total_size(self) -> str:
+
         logger.debug("Retrieving total folder size")
         total_size = self.tools.get_total_size(self.db,self.user_id)
         return self.size_converter(total_size)
@@ -122,7 +138,80 @@ class MCPRegistry:
         Location: {largest.path}
         """
     
-    def get_largest_files(self,limit:int) ->str:
+
+    def get_largest_folders(self,target_folder:str,limit:int=10) -> str:
+        """
+        retrueve and format the largest folders for display
+
+        Args:
+            target_folder:target folder where we have to get largest folders
+            limit:Maximum number of folder to display
+        
+        Returns:
+            A formatted string containing the largest foldders
+        """
+
+        logger.debug("retrieving top %d largest folders",limit)
+
+        folders = self.tools.get_largest_folders(
+            self.db,
+            self.user_id,
+            target_folder,
+            limit
+            )
+        if not folders:
+            logger.warning(
+                "No folder found for user_id=%s",
+                self.user_id
+            )
+            return "No folder found"
+        
+        lines = []
+
+        for index,folder in enumerate(folders,start=1):
+            size = self.size_converter(folder['size'])
+
+            logger.debug(
+                "Largest folder %d: name=%s,size=%s,path=%s",
+                index,
+                folder['name'],
+                size,
+                folder['path']
+            )
+            lines.append(
+                f"{index}. {folder['name']}\n"
+                f"   Size: {size}\n"
+                f"   Path: {folder['path']}\n"
+                f"   Parent path : {folder['parent_path']}"
+            )
+        return "\n\n".join(lines)
+
+    def get_largest_folder(self,target_folder:str) ->str:
+        logger.debug("Retrieving largest folder details")
+        largest = self.tools.get_largest_folder(self.db,self.user_id,target_folder)
+
+        if not largest:
+            logger.warning("No largest folder found for user_id=%s",self.user_id)
+            return "No folder found"
+        
+        size = self.size_converter(largest["size"])
+
+        logger.debug(
+            "Largest folder: name=%s , size=%s , path=%s",
+            largest['name'],
+            size,
+            largest['path']
+        )
+        return f"""
+        Largest folder:
+        Name: {largest['name']}
+        Size: {size}
+        Location: {largest['path']}
+        parent_location: {largest['parent_path']}
+        
+        """
+
+    def get_largest_files(self,limit:int=10) ->str:
         """
         Retrieve and format the largest files for display.
 
