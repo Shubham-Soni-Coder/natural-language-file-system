@@ -63,6 +63,16 @@ class MCPRegistry:
                 "description":"Return the total number of subfolders in the specified directory.",
                 "parameters": {},
             }, 
+            "get_newest_file": {
+                "func": self.get_newest_file,
+                "description":"Retrieve the most recently created file in folder",
+                "parameters":{},
+            },
+            "get_oldest_file":{
+                "func":self.get_oldest_file,
+                "description":"Returns the most oldest created file in folder",
+                "parameters":{},
+            },
             "get_summary": {
                 "func": self.get_summary,
                 "description": "Returns a complete overview of the folder analysis.",
@@ -107,6 +117,28 @@ class MCPRegistry:
         logger.debug("Retrieving total file count")
         return self.tools.get_total_files(self.db,self.user_id)
         
+    def get_oldest_file(self) ->str:
+        logger.debug("retrueving oldest file")
+        data = self.tools.get_oldest_file(self.db,self.user_id)
+        return f"""
+            Oldest File
+            Name : {data.name}
+            Path : {data.path}
+            Size : {self.size_converter(data.size)}
+            Created : {data.file_created_at.strftime('%d %b %Y , %I:%M %p')}
+            Modified : {data.file_modified_at.strftime('%d %b %Y , %I:%M %p')}
+        """
+    def get_newest_file(self) ->str:
+        logger.debug("retruevung newest file")
+        data = self.tools.get_newest_file(self.db,self.user_id)
+        return f"""
+            Newest File
+            Name : {data.name}
+            Path : {data.path}
+            Size : {self.size_converter(data.size)}
+            Created : {data.file_created_at.strftime('%d %b %Y , %I:%M %p')}
+            Modified : {data.file_modified_at.strftime('%d %b %Y , %I:%M %p')}
+        """
 
     def get_total_size(self) -> str:
 

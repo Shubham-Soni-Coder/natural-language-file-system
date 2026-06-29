@@ -8,3 +8,4 @@ extra.py
 run.txt
 logs
 *.log
+query_writer.sql

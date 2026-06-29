@@ -57,12 +57,16 @@ class FileService:
         """
         logger.info("FileService: Creating file record: %s for user %s", data.name, data.user_id)
         file = File(name=data.name,
+                    user_id=data.user_id,
                     path=data.path,
+                    parent_path=data.parent_path,
+                    is_folder=data.is_folder,
                     size=data.size,
                     mime_type=data.mime_type,
                     extension=data.extension,
                     hash=data.hash,
-                    user_id=data.user_id,
+                    file_created_at=data.file_created_at,
+                    file_modified_at=data.file_modified_at,
                     status=data.status)
         db.add(file)
         db.commit()
@@ -142,6 +146,7 @@ class FileService:
     def prepare_file_data(data:dict,user_id:int) -> dict:
         return {
             "name":data["name"],
+            "user_id":user_id,
             "path":data["path"],
             "parent_path":data["parent_path"],
             "is_folder":data["is_folder"],
@@ -149,7 +154,8 @@ class FileService:
             "mime_type":data.get("mime_type"),
             "extension":data.get("extension"),
             "hash":data.get("hash"),
-            "user_id":user_id,
+            "file_created_at":data.get("file_created_at"),
+            "file_modified_at":data.get("file_modified_at"),
             "status":data.get("status","active")
         }
 

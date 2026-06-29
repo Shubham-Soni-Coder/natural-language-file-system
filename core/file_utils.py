@@ -1,6 +1,7 @@
 from pathlib import Path
 import hashlib
 import mimetypes
+from datetime import datetime
 from typing import Generator,Dict,Optional
 from utils import main_logger as logger
 
@@ -53,7 +54,7 @@ class FileUtils:
         try:
             resolved_path = path.resolve()
             parent = resolved_path.parent
-
+            stat = path.stat()
             
             return {
                 "name": path.name,
@@ -64,6 +65,8 @@ class FileUtils:
                 "mime_type": self.get_mime_type(path) if path.is_file() else None,
                 "extension": self.get_extension(path) if path.is_file() else None,
                 "hash": self.get_file_hash(path, include_hash) if path.is_file() else None,
+                "file_created_at":datetime.fromtimestamp(stat.st_ctime),
+                "file_modified_at":datetime.fromtimestamp(stat.st_mtime)
             }
         except Exception as e:
             logger.error(f"Metadata error for {path}: {e}")

@@ -5,6 +5,7 @@ from typing import Optional
 
 class FileCreate(BaseModel):
     name:str
+    user_id:int
     path:str
     parent_path:Optional[str] = None
     is_folder:bool = False
@@ -12,7 +13,10 @@ class FileCreate(BaseModel):
     mime_type:Optional[str] = None
     extension:Optional[str] = None
     hash:Optional[str] = None
-    user_id:int
+
+    file_created_at: Optional[datetime] = None
+    file_modified_at: Optional[datetime] = None
+
     status:Optional[str] = "active"
 
     @classmethod
@@ -21,6 +25,7 @@ class FileCreate(BaseModel):
 
 class FileResponse(BaseModel):
     id : int
+    user_id:int
     name:str
     path:str
     parent_path:Optional[str] = None
@@ -29,7 +34,10 @@ class FileResponse(BaseModel):
     mime_type:str
     extension:str
     hash:Optional[str] = None
-    user_id:int
+
+    file_created_at:datetime
+    file_modified_at:datetime
+
     created_at:datetime
     updated_at:datetime
     status:str
@@ -46,6 +54,8 @@ class FileUpdate(BaseModel):
     mime_type: Optional[str] = None
     extension: Optional[str] = None
     hash: Optional[str] = None
+    file_created_at:Optional[datetime] = None
+    file_modified_at:Optional[datetime] = None
     status: Optional[str] = None
 
 class FileListRequest(BaseModel):

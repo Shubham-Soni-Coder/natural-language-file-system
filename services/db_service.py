@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, select,desc
+from sqlalchemy import func, select,desc,asc
 from models import File,Task
 from utils import main_logger as logger
 from typing import Optional
@@ -334,6 +334,45 @@ class DBService:
         return {ext:count for ext,count in result}
 
     @staticmethod
+    def get_newest_file(db:Session,user_id:int) -> str:
+        """
+            Return the newest file for the given user.
+            Args:
+                db: Active database session.
+                user_id: ID of the user whose files are retrieved.
+            Returns:
+                File | None: The newest file object if found otherwise None.
+        """
+        stmt = (
+            select(File).where(
+            *DBService.base_filters(user_id,is_folder=None))
+            .order_by(desc(File.file_created_at))
+            .limit(1)
+        )
+
+        return db.execute(stmt).scalars().one()
+
+    @staticmethod
+    def get_oldest_file(db:Session,user_id:int) -> str:
+        """
+        Return the oldest file for the given user.
+        Args:
+            db: Active database session.
+            user_id: ID of the user whose files are retrieved.
+        Return:
+            File | None:
+                The oldest file object if fount : otherwise None.
+        """
+        stmt = (
+            select(File)
+            .where(*DBService.base_filters(user_id,is_folder=None))
+            .order_by(asc(File.file_created_at))
+            .limit(1)
+        )
+        return db.execute(stmt).scalars().one()
+        
+
+    @staticmethod
     def get_summary_stats(db: Session, user_id: int) -> dict:
         """
         Returns a combined dictionary of stats, similar to what FileUtils.analyze_folder did.
@@ -353,3 +392,5 @@ class DBService:
             },
             "category_counts":category_count
         }
+    
+    # def get_newest_file()...

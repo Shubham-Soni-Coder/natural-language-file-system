@@ -1,4 +1,7 @@
-from sqlalchemy import Integer, String,Boolean , Column, ForeignKey,func , TIMESTAMP
+from sqlalchemy import (
+     Integer, String,Boolean , Column,
+      ForeignKey,func , TIMESTAMP , DateTime
+)
 from utils import Base
 
 
@@ -16,8 +19,12 @@ class File(Base):
     extension = Column(String,nullable=True)
     hash = Column(String,nullable=True,index=True)
 
-    created_at = Column(TIMESTAMP,server_default=func.now())
-    updated_at = Column(TIMESTAMP,server_default=func.now(),onupdate=func.now())
+    file_created_at = Column(DateTime,nullable=True)
+    file_modified_at = Column(DateTime,nullable=True)
+
+
+    created_at = Column(DateTime(timezone=True),server_default=func.now(),nullable=False)
+    updated_at = Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now(),nullable=False)
     
     status = Column(String,default="active")
 
