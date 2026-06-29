@@ -85,7 +85,6 @@ class FileUtils:
             ".env",
             ".gitignore",
             "logs",
-            "test_folder"
         }
 
         for path in self.folder.rglob("*"):

@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func, select,desc,asc
+from sqlalchemy.orm import Session , aliased
+from sqlalchemy import func, select,desc,asc , not_
 from models import File,Task
 from utils import main_logger as logger
 from typing import Optional
@@ -94,16 +94,16 @@ class DBService:
     @staticmethod
     def get_largest_folders(db:Session,user_id:int,target_path:str,limit:int):
         """
-        Get the largest direcrt child folders
-        
+        Get the largest direct child folders.
+
         Args:
-            db:Database session
-            user_id : user id
-            target_path : Parent directory path.
-            limit : Number of folders to return.
+            db: Database session.
+            user_id: User id.
+            target_path: Parent directory path.
+            limit: Number of folders to return.
 
         Returns:
-            list[tuple]:list of (folder_path,size) tuples.
+            list[tuple]: list of (folder_path, size) tuples.
         """
 
         logger.debug(
@@ -147,10 +147,9 @@ class DBService:
             key=lambda item:item[1],
             reverse=True
         )
-        logger.info("Sorted data created : %d",len(sorted_data))
+        logger.info("Sorted data created: %d", len(sorted_data))
         result = DBService.build_folder_response(db,user_id,sorted_data)
-
-        logger.info("Retrived %d largest folders",limit)
+        logger.info("Retrieved %d largest folders", limit)
         
         return result[:limit]
 
@@ -158,22 +157,22 @@ class DBService:
     @staticmethod
     def get_largest_folder(db:Session,user_id:int,target_path:str):
         """
-            get the largest direct child folder.
+        Get the largest direct child folder.
 
-            Args:
-                db:Database session.
-                user_id : User id.
-                targest_path : Parent directory path
-            
-            Returns:
-                tuple | None:
-            (folder_path,size) or None if no folder exists.
+        Args:
+            db: Database session.
+            user_id: User id.
+            target_path: Parent directory path.
+
+        Returns:
+            tuple | None: (folder_path, size) or None if no folder exists.
         """
         logger.debug(
-            "Retrueving largest folder for user_id=%s , target_path=%s",user_id,target_path
+            "Retrieving largest folder for user_id=%s, target_path=%s", user_id, target_path
         )
-        largest_folder = DBService.get_largest_folders(db,user_id,target_path,1)[0]
-        logger.info("Largest folder retrived successfully with largest file:%s",largest_folder)
+        folders = DBService.get_largest_folders(db, user_id, target_path, 1)
+        largest_folder = folders[0] if folders else None
+        logger.info("Largest folder retrieved successfully: %s", largest_folder)
         return largest_folder
 
     @staticmethod
@@ -370,7 +369,44 @@ class DBService:
             .limit(1)
         )
         return db.execute(stmt).scalars().one()
+    
+    @staticmethod 
+    def get_empty_folder(db:Session,user_id:int):
+        """
+        Retrieve all empty folders for the specified user.
+
+        Args:
+            db:Session
+            user_id:int
+
+        Output:
+            SubFolder 
+        """
+        logger.debug("Retrieving empty folders")
         
+        F = aliased(File)
+        C = aliased(File)
+
+        subq = (
+            select(1)
+            .where(
+                C.user_id == F.user_id,
+                C.parent_path == F.path
+            )
+            .correlate(F)
+        )
+        query = (
+            select(F.name,F.path)
+            .where(
+                F.user_id == user_id,
+                F.is_folder == True,
+                not_(subq.exists())
+            )
+        )
+        
+        return  db.execute(query).all()
+
+
 
     @staticmethod
     def get_summary_stats(db: Session, user_id: int) -> dict:
@@ -392,5 +428,3 @@ class DBService:
             },
             "category_counts":category_count
         }
-    
-    # def get_newest_file()...

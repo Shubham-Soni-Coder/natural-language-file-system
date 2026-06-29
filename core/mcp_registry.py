@@ -73,6 +73,16 @@ class MCPRegistry:
                 "description":"Returns the most oldest created file in folder",
                 "parameters":{},
             },
+            "get_empty_folders":{
+                "func":self.get_empty_folders,
+                "Description":"Return all empty folder for the specified user.",
+                "parameters":{},
+            },
+            "get_file_type_distribution":{
+                "func":self.get_file_type_distribution,
+                "Description":"Return the distribution of files groupe by their extension for the specified user.",
+                "parameters":{},
+            },
             "get_summary": {
                 "func": self.get_summary,
                 "description": "Returns a complete overview of the folder analysis.",
@@ -129,7 +139,7 @@ class MCPRegistry:
             Modified : {data.file_modified_at.strftime('%d %b %Y , %I:%M %p')}
         """
     def get_newest_file(self) ->str:
-        logger.debug("retruevung newest file")
+        logger.debug("Retrieving newest file")
         data = self.tools.get_newest_file(self.db,self.user_id)
         return f"""
             Newest File
@@ -139,6 +149,20 @@ class MCPRegistry:
             Created : {data.file_created_at.strftime('%d %b %Y , %I:%M %p')}
             Modified : {data.file_modified_at.strftime('%d %b %Y , %I:%M %p')}
         """
+
+    def get_empty_folders(self)->str:
+        logger.debug("Retrieving empty folder")
+        result = self.tools.get_empty_folder(self.db,self.user_id)
+        if not result:
+            logger.warning("No empty folders found for user_id=%s",self.user_id)
+            return "No empty folder"
+        logger.info("Found %d empty folders for user_id=%s",len(result),self.user_id)
+
+        return f"""
+        Found {len(result)} empty folder(s).
+        """ + "\n".join(f"{i}. {folder.name}\n {folder.path}" 
+            for i, folder in enumerate(result,start=1)
+        )
 
     def get_total_size(self) -> str:
 
@@ -309,6 +333,21 @@ class MCPRegistry:
             self.db,
             self.user_id,
             category
+        )
+
+    def get_file_type_distribution(self):
+        logger.debug("Retrieving file type distribution")
+        result = self.tools.get_all_category_count(self.db,self.user_id)
+        if not result:
+            logger.warning("No file type distribution found for user_id=%s",self.user_id)
+            return "No FIle Distribution"
+        logger.info("Retrieved file type distribution with %d file types for user_id=%s",len(result),self.user_id)
+        return (
+            "File Type Distribution\n\n"
+            + "\n".join(
+                f"{(ext or 'No Extension').upper():<15}:{count}"
+                for ext,count in result.items()
+            )
         )
 
     def get_summary(self) -> str:
