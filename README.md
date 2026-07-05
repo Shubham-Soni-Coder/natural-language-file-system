@@ -10,6 +10,8 @@
 ![Google Gemini](https://img.shields.io/badge/Google_Gemini-2.5_Flash-orange.svg?style=flat&logo=google&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
+🗺️ **[Project Flow](docs/project_flow.md)** | 📖 **[System Overview](docs/overview.md)** | 📈 **[Project Roadmap](docs/project_roadmap.md)** | ⚖️ **[MIT License](LICENSE)**
+
 This project is an AI-powered file management system that bridges Google's Gemini model with the local file system using the Model Context Protocol (MCP). Users can analyze, search, and organize files through natural language instead of manually browsing folders.
 
 ---
@@ -95,6 +97,17 @@ User CLI / Client
 ├── main.py                    # Interactive Command Line Client
 └── testing.py                 # Local test runner script
 ```
+
+---
+
+## 📖 Additional Documentation
+
+For more in-depth technical details and architectural recommendations, refer to the documents in the [docs/](docs) directory:
+- ⚙️ **[System Overview & Rules](docs/overview.md):** Core objectives, rules of client-server isolation, and validation flows.
+- 🗺️ **[Project Flow](docs/project_flow.md):** Step-by-step logic flow diagrams explaining query translation and tool execution.
+- 📈 **[Project Roadmap](docs/project_roadmap.md):** A checklist of completed milestones and upcoming backlog tasks.
+- 🔍 **[Initial Problem Analysis](docs/project_problem_analysis.md):** Pre-v1.0 audit log listing resolved bugs (for archival reference).
+- 📐 **[Architecture Recommendations](docs/architecture_recommendations.md):** Architectural advice on file splitting, caching, and performance optimizations.
 
 ---
 
