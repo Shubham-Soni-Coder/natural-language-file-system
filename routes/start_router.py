@@ -10,10 +10,10 @@ route = APIRouter()
 @route.on_event("startup")
 def startup_event():
     db = SessionLocal()
-    foldername = "E:/File_mangement_system"
+    foldername = "E:/test_folder"
     scanner = FileUtils(foldername)
     try:
-        generator = scanner.scan()
+        generator = scanner.scan(include_hash=True)
         FileService.ingest(db,generator,user_id=1)
 
         logger.info("Startup File Ingestion complete suceesfully")

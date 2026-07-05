@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session , aliased
-from sqlalchemy import func, select,desc,asc , not_
+from sqlalchemy import func, select,desc,asc , not_, or_
 from models import File,Task
 from utils import main_logger as logger
+from utils.category_helpers import get_extensions_for_category, normalize_category
+from utils.sorting_helper import start_sort
 from typing import Optional
 from pathlib import Path
 from collections import defaultdict
@@ -250,50 +252,37 @@ class DBService:
 
 
     @staticmethod
-    def normalize_category(category: str) -> str:
-        if category is None:
-            logger.debug("DBService: normalize_category received None")
-            return ""
-
-        normalized = category.strip().lower().lstrip(".")
-        logger.debug(
-            "DBService: normalize_category transformed '%s' to '%s'",
-            category,
-            normalized,
-        )
-        return normalized
-
-    @staticmethod
-    def get_extensions_for_category(category: str) -> list[str] | None:
-        mapping = {
-            "python": ["py", "pyw"],
-            "image": ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg"],
-            "video": ["mp4", "mov", "mkv", "avi", "webm", "flv", "wmv"],
-            "documents": ["pdf", "doc", "docx", "txt", "md", "xls", "xlsx", "ppt", "pptx", "odt"],
-            "document": ["pdf", "doc", "docx", "txt", "md", "odt"],
-            "text": ["txt", "md", "rtf"],
-            "audio": ["mp3", "wav", "aac", "flac", "ogg", "m4a"],
-            "archive": ["zip", "tar", "gz", "rar", "7z", "bz2"],
-            "code": ["py", "js", "ts", "java", "cs", "cpp", "c", "rb", "go", "rs", "php", "swift", "kt", "kts"],
+    def auto_sort_files(db:Session,user_id:int,target_folder:str):
+        stmt = (
+            select(
+                File.path,
+                File.extension
+                )
+                .where(File.parent_path == str(Path(target_folder)),File.is_folder==False)
+            )
+        result = db.execute(stmt).fetchall()
+        report = start_sort(result)
+        return {
+            "status":"Incomplete",
+            "moved":len(report['moved']),
+            "skipped":len(report['skipped']),
+            "failed":len(report['failed']),
+            "skipped_files":report['skipped'],
+            "failed_files":report['failed']
         }
-        extensions = mapping.get(category)
-        logger.debug(
-            "DBService: get_extensions_for_category for '%s' returned %s",
-            category,
-            extensions,
-        )
-        return extensions
+
+
 
     @staticmethod
     def get_category_count(db: Session, user_id: int, category_ext: str) -> int:
-        normalized = DBService.normalize_category(category_ext)
+        normalized = normalize_category(category_ext)
         logger.debug("DBService: Fetching count for category input: %s, normalized: %s", category_ext, normalized)
 
         if not normalized:
             logger.warning("DBService: Empty category provided for count query")
             return 0
 
-        extensions = DBService.get_extensions_for_category(normalized)
+        extensions = get_extensions_for_category(normalized)
         if extensions:
             logger.info(
                 "DBService: Counting files for category '%s' using extensions %s",
@@ -351,6 +340,7 @@ class DBService:
 
         return db.execute(stmt).scalars().one()
 
+
     @staticmethod
     def get_oldest_file(db:Session,user_id:int) -> str:
         """
@@ -407,6 +397,28 @@ class DBService:
         return  db.execute(query).all()
 
 
+    @staticmethod
+    def get_duplicate_files(db:Session,user_id:int) -> dict:
+        sub_query = (
+            select(File.hash)
+            .where(File.user_id==1,File.is_folder==False)
+            .group_by(File.hash)
+            .having(func.count(File.hash)>1)
+        )
+
+        stmt = (
+            select(
+                File.hash,
+                func.count(File.id).label("file_count"),
+                func.json_agg(
+                    func.json_build_object('name',File.name,'path',File.path)
+                ).label("fies_in_group")
+            )
+            .where(File.hash.in_(sub_query))
+            .group_by(File.hash)
+        )
+
+        return  db.execute(stmt).all()
 
     @staticmethod
     def get_summary_stats(db: Session, user_id: int) -> dict:

@@ -83,7 +83,19 @@ class MCPRegistry:
                 "Description":"Return the distribution of files groupe by their extension for the specified user.",
                 "parameters":{},
             },
-            "get_summary": {
+            "get_duplicate_files":{
+                "func":self.get_duplicate_files,
+                "Description":"Return all duplicate files grouped by their content hash",
+                "parameters":{},
+            },
+            "auto_sort_files":{
+                "func":self.auto_sort_files,
+                "Description":"Automatically organizes files into categorized folders within the specified absolute path.",
+                "parameters":{
+                    "target_folder":"string",
+                }
+            },
+            "get_summary": { 
                 "func": self.get_summary,
                 "description": "Returns a complete overview of the folder analysis.",
                 "parameters": {},
@@ -349,6 +361,89 @@ class MCPRegistry:
                 for ext,count in result.items()
             )
         )
+    
+    def get_duplicate_files(self):
+        """
+            Retrieve all duplicate files for the specified user.
+        """
+        logger.debug("Retrieving duplicate files")
+
+        result = self.tools.get_duplicate_files(self.db,self.user_id)
+
+        if not result:
+            logger.warning("No duplicate files found for user_id=%s",self.user_id)
+            return "No duplicate found"
+        logger.info("Retrieved %d duplicate fil groups for user_id=%s",len(result),self.  user_id)
+
+        lines = [f"Found {len(result)} duplicate file group(s).\n"]
+
+        for index,(_,file_count,files) in enumerate(result,start=1):
+            lines.append(f"Group {index} ({file_count} files)")
+
+            for file in files:
+                lines.append(f"{file['name']}")
+                lines.append(f"{file['path']}")
+                lines.append("")
+            
+            lines.append("")
+        return "\n".join(lines)
+        
+
+    def auto_sort_files(self,target_folder:str)->str:
+        data = self.tools.auto_sort_files(self.db,self.user_id,target_folder)
+        total_files = data['moved'] + data['skipped'] + data['failed']
+        lines = []
+        lines.append("Automatic File Sorting")
+        lines.append("=" * 50)
+
+        lines.append("")
+        lines.append(f"Status:{data['status']}")
+        lines.append(f"Target Folder : {target_folder}")
+
+        lines.append("")
+        lines.append("Summary")
+        lines.append("-" * 50)
+
+        lines.append(f"Total Files : {total_files}")
+        lines.append(f"Moved : {data['moved']}")
+        lines.append(f"Skipped : {data['skipped']}")
+        lines.append(f"Failed : {data['failed']}")
+
+        if data.get('skipped_files'):
+            lines.append("")
+            lines.append("=" * 50)
+            lines.append("Skipped Files")
+            lines.append("-" * 50)
+        
+            for index,file in enumerate(data['skipped_files'],start=1):
+                lines.append(f"{index}.{file['name']}")
+                lines.append(f" Reason : {file['reason']}")
+                lines.append("")
+        
+        if data['failed_files']:
+            lines.append("")
+            lines.append("=" * 50)
+            lines.append("Failed Files")
+            lines.append("-" * 50)
+        
+            for index,file in enumerate(data['failed_files'],start=1):
+                lines.append(f"{index}.{file['name']}")
+                lines.append(f" Reason : {file['reason']}")
+                lines.append("")
+
+        if data['moved']==total_files:
+            lines.append("=" * 50)
+            lines.append("")
+            lines.append("All files were sorted successfully.")
+        
+        else:
+            lines.append("=" * 50)
+            lines.append("=")
+            lines.append("Operation completed")
+        
+        return "\n".join(lines)
+
+
 
     def get_summary(self) -> str:
         logger.debug("Generating summary report")
