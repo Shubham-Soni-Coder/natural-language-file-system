@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session , aliased
-from sqlalchemy import func, select,desc,asc , not_, or_
+from sqlalchemy import func, select,desc,asc , not_, or_ , update
 from models import File,Task
 from utils import main_logger as logger
 from utils.category_helpers import get_extensions_for_category, normalize_category
@@ -253,17 +253,41 @@ class DBService:
 
     @staticmethod
     def auto_sort_files(db:Session,user_id:int,target_folder:str):
+        normalized_target_folder = str(Path(target_folder).resolve())
         stmt = (
             select(
                 File.path,
                 File.extension
                 )
-                .where(File.parent_path == str(Path(target_folder)),File.is_folder==False)
+                .where(
+                    File.user_id==user_id,
+                    File.parent_path==normalized_target_folder,
+                    File.is_folder==False)
             )
         result = db.execute(stmt).fetchall()
-        report = start_sort(result)
+        if not result:
+            return {
+                "status":"No Files found",
+                "message":"No files available for sorting"
+            }
+        report,moved_files = start_sort(result)
+
+        for file_info in moved_files:
+            existing = db.query(File).filter(File.path == file_info['new_path']).first()
+            
+            if existing:
+                db.query(File).filter(File.path == file_info['old_path']).delete()
+            else:
+                db.query(File).filter(File.path == file_info['old_path']).update({
+                    "path": file_info['new_path'],
+                    "parent_path": file_info['new_parent']
+                })
+
+        if moved_files:
+            db.commit()
+
         return {
-            "status":"Incomplete",
+            "status":"complete",
             "moved":len(report['moved']),
             "skipped":len(report['skipped']),
             "failed":len(report['failed']),
@@ -338,7 +362,7 @@ class DBService:
             .limit(1)
         )
 
-        return db.execute(stmt).scalars().one()
+        return db.execute(stmt).scalars().first()
 
 
     @staticmethod
@@ -358,7 +382,7 @@ class DBService:
             .order_by(asc(File.file_created_at))
             .limit(1)
         )
-        return db.execute(stmt).scalars().one()
+        return db.execute(stmt).scalars().first()
     
     @staticmethod 
     def get_empty_folder(db:Session,user_id:int):
@@ -401,7 +425,7 @@ class DBService:
     def get_duplicate_files(db:Session,user_id:int) -> dict:
         sub_query = (
             select(File.hash)
-            .where(File.user_id==1,File.is_folder==False)
+            .where(File.user_id==user_id,File.is_folder==False)
             .group_by(File.hash)
             .having(func.count(File.hash)>1)
         )
@@ -414,7 +438,10 @@ class DBService:
                     func.json_build_object('name',File.name,'path',File.path)
                 ).label("fies_in_group")
             )
-            .where(File.hash.in_(sub_query))
+            .where(
+                File.hash.in_(sub_query),
+                File.user_id==user_id                
+                )
             .group_by(File.hash)
         )
 

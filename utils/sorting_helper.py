@@ -4,21 +4,6 @@ from pathlib import Path
 import shutil
 
 
-report = {
-    "moved":[],
-    "skipped":[],
-    "failed":[]
-}
-
-
-def _reset_report():
-    global report
-    report = {
-        "moved": [],
-        "skipped": [],
-        "failed": [],
-    }
-    return report
 
 def get_category_from_extension(extension: str) -> str:
     if extension is None:
@@ -53,11 +38,22 @@ def get_category_from_extension(extension: str) -> str:
     return "extra"
 
 
-def move_file(file_path:str,folder:str):
-    global report 
-    folder_path = Path(file_path).parent #E:/test_folder
-    file_name  = Path(file_path).name #image.jpg
-    
+def move_file(file_path:str,folder:str,report:dict):
+    source_path = Path(file_path).expanduser()
+    if not source_path.exists():
+        logger.warning("Sorting helper: source file does not exist -> %s", source_path)
+        report['failed'].append({
+            "name": source_path.name,
+            "reason": "Source file does not exist"
+        })
+        return {
+            "status":"failed",
+            "reason":"Source file does not exist"
+        }
+
+    source_path = source_path.resolve()
+    folder_path = source_path.parent
+    file_name = source_path.name
 
     if not folder:
         logger.warning("This %s have folder_path :  %s , so change to extra", file_name,folder)
@@ -68,7 +64,7 @@ def move_file(file_path:str,folder:str):
 
     if not destination_folder.exists():
         logger.info("Created destination folder : %s",destination_folder)
-        destination_folder.mkdir()
+        destination_folder.mkdir(parents=True,exist_ok=True)
     
     if new_file_path.exists():
         logger.info("Skipped : %s already exist",str(new_file_path.name))
@@ -76,7 +72,10 @@ def move_file(file_path:str,folder:str):
             "name":new_file_path.name,
             "reason":"File already exists"
         })
-        return "Skipped"
+        return {
+            "status":"Skipped",
+            "Reason":"File already exists"
+        }
 
     try:
         shutil.move(str(file_path),str(new_file_path))
@@ -84,18 +83,32 @@ def move_file(file_path:str,folder:str):
         report['moved'].append({"name":new_file_path.name,
             "reason":"File succesfullly moved"
             })
-        return "Successfully"
+        return {
+            "status":"success",
+            "old_path":str(source_path),
+            "new_path":str(new_file_path),
+            "new_parent":str(new_file_path.parent)
+        }
     except Exception as e:
         logger.error("Error: %s not moved. Reason: %s",new_file_path.name,str(e))
         report['failed'].append({
             "name":new_file_path.name,
             "reason":str(e)
         })
-        return "failed"
+        return {
+            "status":"Error",
+            "reason":str(e)
+        }
     
 
 def start_sort(result):
-    _reset_report()
+    report = {
+        "moved": [],
+        "skipped": [],
+        "failed": [],
+    }
+    moved_files = []
+
     for data in result:
         extension = getattr(data, "extension", None)
         if extension is None and isinstance(data, (tuple, list)):
@@ -105,9 +118,25 @@ def start_sort(result):
         if path is None and isinstance(data, (tuple, list)):
             path = data[0]
 
-        if path is None:
+        if path is None:            
+            logger.warning("Sorting helper: skipping item with missing path -> %s", data)
+            report['failed'].append({
+                "name": "unknown",
+                "reason": "Missing path"
+            })
             continue
 
+        if extension is None:
+            logger.warning("Sorting helper: skipping item with missing extension -> %s", path)
+            report['failed'].append({
+                "name": Path(path).name,
+                "reason": "Missing extension"
+            })   
+            continue    
+
         folder_type = get_category_from_extension(extension)
-        move_file(path, folder_type)
-    return report
+        status = move_file(path, folder_type,report)
+
+        if status.get("status") == "success":
+            moved_files.append(status)
+    return report , moved_files

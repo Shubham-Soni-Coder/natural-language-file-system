@@ -1,11 +1,43 @@
-.env 
-venv 
-__pycache__
-test_folder
+# Environment & credentials
+.env
+.env.local
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python caching
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+logs/
+*.log
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Project-specific local files & scanning outputs
+File_metadata.csv
+test_folder/
 .tldr
 extra.py
 .agent
 run.txt
-logs
-*.log
 query_writer.sql
+testing.py
+docs/project_problem_analysis.md
+docs/architecture_recommendations.md

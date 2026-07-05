@@ -9,7 +9,7 @@ class File(Base):
     __tablename__ = "files"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer,ForeignKey("files.id"))
+    user_id = Column(Integer,ForeignKey("users.id"))
     name = Column(String,nullable=False)
     path = Column(String,nullable=False,unique=True)
     parent_path = Column(String,nullable=True)

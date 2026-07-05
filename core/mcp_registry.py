@@ -16,7 +16,7 @@ class MCPRegistry:
         self.tool_registry = {
             "get_total_files": {
                 "func": self.get_total_files,
-                "descri==ption": "Returns the total number of files in the scanned folder.",
+                "description": "Returns the total number of files in the scanned folder.",
                 "parameters": {},
             },
             "get_total_size": {
@@ -75,22 +75,22 @@ class MCPRegistry:
             },
             "get_empty_folders":{
                 "func":self.get_empty_folders,
-                "Description":"Return all empty folder for the specified user.",
+                "description":"Return all empty folder for the specified user.",
                 "parameters":{},
             },
             "get_file_type_distribution":{
                 "func":self.get_file_type_distribution,
-                "Description":"Return the distribution of files groupe by their extension for the specified user.",
+                "description":"Return the distribution of files groupe by their extension for the specified user.",
                 "parameters":{},
             },
             "get_duplicate_files":{
                 "func":self.get_duplicate_files,
-                "Description":"Return all duplicate files grouped by their content hash",
+                "description":"Return all duplicate files grouped by their content hash",
                 "parameters":{},
             },
             "auto_sort_files":{
                 "func":self.auto_sort_files,
-                "Description":"Automatically organizes files into categorized folders within the specified absolute path.",
+                "description":"Automatically organizes files into categorized folders within the specified absolute path.",
                 "parameters":{
                     "target_folder":"string",
                 }
@@ -142,6 +142,8 @@ class MCPRegistry:
     def get_oldest_file(self) ->str:
         logger.debug("retrueving oldest file")
         data = self.tools.get_oldest_file(self.db,self.user_id)
+        if data is None:
+            return "No files found"
         return f"""
             Oldest File
             Name : {data.name}
@@ -153,6 +155,8 @@ class MCPRegistry:
     def get_newest_file(self) ->str:
         logger.debug("Retrieving newest file")
         data = self.tools.get_newest_file(self.db,self.user_id)
+        if data is None:
+            return "No files found"
         return f"""
             Newest File
             Name : {data.name}
@@ -391,6 +395,8 @@ class MCPRegistry:
 
     def auto_sort_files(self,target_folder:str)->str:
         data = self.tools.auto_sort_files(self.db,self.user_id,target_folder)
+        if data.get('message'):
+            return "No file found"
         total_files = data['moved'] + data['skipped'] + data['failed']
         lines = []
         lines.append("Automatic File Sorting")

@@ -31,37 +31,35 @@ The primary objective is to build an **Intelligent Agentic File System**. The go
 
 ### Pseudo-code Implementation
 ```python
-def agent_process(user_input_string):
-    # 1. Fetch available capabilities from the MCP Registry
-    tools = mcp_server.list_tools() 
+def process_query(query: str, db: Session, ai_driver: AiDriver, mcp_registry: MCPRegistry):
+    # 1. Fetch available tool metadata schemas from the MCP Registry
+    tools = mcp_registry.get_tools() 
     
-    # 2. Contextualize the brain (System Prompt + Tools + User Query)
-    ai_instruction = ai_handler.generate_call(user_input_string, tools)
+    # 2. Contextualize the brain (System Instruction + Tools + User Query)
+    ai_response = ai_driver.run_ai(query, tools)
     
     # 3. Validation Phase
-    if not ai_instruction.contains("tools"):
-        return "Error: I don't know how to do that yet."
+    if not ai_response or "tools" not in ai_response:
+        raise HTTPException(status_code=400, detail="Could not understand query or no tools selected")
 
     results = []
-    for call in ai_instruction.tools:
-        # 4. Execute the specific Python function
-        # Example: mcp.execute_tool("get_largest_file", {})
-        output = mcp_server.run(call.name, call.arguments)
+    for tool_call in ai_response["tools"]:
+        tool_name = tool_call.get("tool")
+        args = tool_call.get("argument", {})
         
-        # 5. Maintain State
-        if call.modifies_data:
-            database.record_change(output)
+        # 4. Execute the specific Python tool function registered in MCPRegistry
+        if tool_name in mcp_registry.tool_registry:
+            tool_result = mcp_registry.execute_tool(tool_name, args)
+            results.append({"tool": tool_name, "result": tool_result})
+        else:
+            results.append({"tool": tool_name, "error": f"Invalid tool: {tool_name}"})
             
-        results.append(output)
-
-    # 6. Final Output to User
-    return format_for_user_terminal(results)
+    # 5. Output response dictionary to the Router
+    return results
 ```
 
 ---
 *Document Version: 1.0*
-*Focus: AI-Powered File Orchestration*
-```
 
 ### Description of the file:
 *   **Goal:** Explicitly states that this is an "Agentic" system, not just a static script.
