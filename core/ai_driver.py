@@ -1,4 +1,3 @@
-import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -56,7 +55,7 @@ class AiDriver:
             return None
         try:
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.5-flash",
                 contents=user_input,
                 config=types.GenerateContentConfig(
                     system_instruction=self.build_prompt(tools),

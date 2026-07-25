@@ -1,23 +1,25 @@
 from pydantic_settings import BaseSettings,SettingsConfigDict
 
 class Settings(BaseSettings):
-    # ai 
-    GEMINI_API_KEY : str 
- 
-    # Db 
-    DB_USER : str
-    DB_PASSWORD : str
-    DB_HOST : str
-    DB_PORT : int 
+    # AI
+    GEMINI_API_KEY: str | None = None
+
+    # Database
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str
+    DB_PORT: int
     DB_NAME: str
 
-    # log 
-    LOG_LEVEL :  str
-    LOG_FILE_PATH : str
+    # Logging (with default fallbacks)
+    LOG_LEVEL: str = "INFO"
+    LOG_FILE_PATH: str = "app.log"
 
-
-    model_config = SettingsConfigDict(env_file=".env")
-
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",  # Prevents crashing on extra .env variables
+    )
 
 
 settings = Settings()
