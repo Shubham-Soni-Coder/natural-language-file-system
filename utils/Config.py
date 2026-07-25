@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FILE_PATH: str = "app.log"
 
+    # folder path
+    FOLDER_PATH:str | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
