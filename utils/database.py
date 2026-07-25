@@ -21,7 +21,11 @@ def init_db():
     from models import File, User, Task  # ensure all model classes are imported before creating tables
     logger.info("Creating database tables if they do not exist")
     Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
 
+    if db.query(User).count() == 0:
+        db.add(User(name="Tester",email="tester@gmail.com"))
+        db.commit()
 
 def get_db():
     db = SessionLocal()

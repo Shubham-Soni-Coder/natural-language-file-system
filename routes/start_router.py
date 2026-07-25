@@ -10,7 +10,7 @@ route = APIRouter()
 @route.on_event("startup")
 def startup_event():
     db = SessionLocal()
-    foldername = "E:/test_folder"
+    foldername = "/home/ubuntu/natural-language-file-system"
     scanner = FileUtils(foldername)
     try:
         generator = scanner.scan(include_hash=True)
