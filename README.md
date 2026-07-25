@@ -101,9 +101,28 @@ Copy the `.env.example` template to `.env`:
 *   **Windows (Command Prompt):** `copy .env.example .env`
 *   **Linux/macOS:** `cp .env.example .env`
 
-Open `.env` in a text editor and fill in your details:
-*   **GEMINI_API_KEY**: Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-*   **DB_USER / DB_PASSWORD**: Your PostgreSQL database credentials.
+Open `.env` in a text editor and configure the variables:
+
+```env
+# Database
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ai_file_system
+
+# AI
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.5-flash
+
+# Authentication
+SECRET_KEY=your_jwt_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Folder Path 
+FOLDER_PATH=/path/to/target/folder
+```
 
 ### 2. Database Initialization
 Log into PostgreSQL via your terminal or GUI and create the database:
