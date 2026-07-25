@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings,SettingsConfigDict
 class Settings(BaseSettings):
     # AI
     GEMINI_API_KEY: str | None = None
+    GEMINI_MODEL:str | None = None
 
     # Database
     DB_USER: str
